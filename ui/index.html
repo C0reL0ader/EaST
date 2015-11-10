@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+  <meta charset="UTF-8">
+  <title>EaST UI</title>
+
+  <script
+    id="sap-ui-bootstrap"
+    src="resources/sap-ui-core.js"
+    data-sap-ui-theme="sap_bluecrystal"
+    data-sap-ui-libs="sap.ui.commons, sap.m"
+    data-sap-ui-xx-bindingSyntax="complex"
+    data-sap-ui-resourceroots='{
+            "mvc": "./mvc/"
+         }' >
+  </script>
+    <script src="guiCommands.js" ></script>
+    <script src="serverCommands.js"></script>
+    <script src="WebsocketHandler.js"></script>
+    <script src="customControls.js"></script>
+    <script src="resources/codemirror.js"></script>
+    <script src="resources/mode/python/python.js"></script>
+    <script src="lodash.min.js"></script>
+    <link rel="stylesheet" href="resources/codemirror.css">
+    <style>
+        .CodeMirror {
+            height: 100%;
+        }
+        .moduleInfoTextView{
+            background-color: white;
+        }
+        .moduleFailed{
+            background-color: red !important;            
+        }
+        .moduleSucceeded{
+            background-color: #379E00 !important;            
+        }
+        .sapUiPanelTitle{
+            text-align: center;
+        }
+        .sapMITBText {
+          background-color: #363E43;
+          color: white !important;
+          text-shadow: none;
+        }
+
+        .tabFilterCloseBtn{
+          position: relative;
+          bottom: 7px;
+          background: none;
+          border: 1px solid white;
+          padding: 0px !important;
+          color: white;
+          width: 15px;
+          left: 5px;
+          margin: 0px 5px 0px;
+          font-size: 15px;
+          font-weight: 20;
+        }
+        .listenerLabel {
+          width: 8px;
+          height: 8px;
+          bottom: 3px;
+          right: 5px;
+          display: inline-block;
+          position: relative;
+          background-color: #363E43;
+          border-radius: 50%;
+          border: 2px solid white;
+          margin: 0px 5px 0px 0px;
+        }
+    </style>
+  <script>
+      
+      var mainController = sap.ui.controller("mvc.Main");
+      var mainView = sap.ui.view({
+          type: sap.ui.core.mvc.ViewType.JS,
+          viewName: "mvc.Main",
+          controller: mainController
+      });
+      mainView.setHeight("100%");
+      
+
+      var runDialogController = sap.ui.controller("mvc.RunDialog");
+      var runDialogView = sap.ui.view({
+          type: sap.ui.core.mvc.ViewType.JS,
+          viewName: "mvc.RunDialog",
+          controller: runDialogController
+      });
+
+      var codeEditorDialogController = sap.ui.controller("mvc.CodeEditor");
+      var codeEditorDialogView = sap.ui.view({
+          type: sap.ui.core.mvc.ViewType.JS,
+          viewName: "mvc.CodeEditor",
+          controller: codeEditorDialogController
+      });
+
+      mainView.placeAt("content");
+      $( document ).ready(function() {
+          guiCommandsHandler = new GuiCommandsHandler();          
+          serverCommandsHandler = new ServerCommandsHandler();
+          websocketHandler = new WebsocketHandler();
+          modulesTabs = [];
+      });
+
+      function doSend(message)
+      {
+          websocketHandler.doSend(message);
+      }
+
+      function bind(func, context) {
+          return function() {
+              return func.apply(context, arguments);
+          };
+      }
+
+
+
+
+
+  </script>
+</head>
+<body class="sapUiBody" role="application" style="height: 100vh">
+    <div id="content" style="height: 100vh"></div>
+</body>
+</html>

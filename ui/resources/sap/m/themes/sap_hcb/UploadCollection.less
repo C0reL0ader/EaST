@@ -1,0 +1,98 @@
+/* ===================================================================================== */
+/* CSS for control sap.m/UploadCollection.control                                        */
+/*                                                                                       */
+/* HCB Theme                                                                             */
+/* ===================================================================================== */
+
+
+/* ************************************************************************************* */
+/* Cozy Form Factor                                                                      */
+/* ************************************************************************************* */
+/* List Header */
+.sapMTB.sapMUCListHeader {
+	background-color:		@sapHCStandardBG;
+	border-bottom-width: 	0.1875rem;
+	border-bottom-color:	@sapHCStandardFG;
+	font-size:				@sapMFontHeader4Size;
+	font-weight:			@sapUiFontHeaderWeight;
+	color:					@sapHCStandardFG;
+	text-shadow:			none;
+}
+
+.sapMLIB.sapMUCListSingleItem,
+.sapMLIB.sapMUCListFirstItem,
+.sapMLIB.sapMUCListLastItem,
+.sapMLIB.sapMUCListItem {
+	border-bottom-color:	@sapHCReducedAltFG;
+}
+
+/* Item Icon */
+.sapMUCItemIcon {
+	color:					@sapHCStandardFG;
+}
+
+/* Buttons */
+.sapMBtn.sapMUCEditBtn,
+.sapMBtn.sapMUCDeleteBtn,
+.sapMBtn.sapMUCCancelBtn,
+.sapMBtn.sapMUCOkBtn {
+	margin-left:		0.25rem;
+}
+
+
+/* Text: Filename */
+.sapMUCFileName.sapMLnk {
+	font-size:			@sapMFontLargeSize;
+}
+
+/*if no link is provided the file name is displayed as an disabled link */
+.sapMLnkDsbl.sapMUCFileName {
+       color: @sapHCStandardFG;
+}
+
+/* Text: Description (/Progress) */
+.sapMUCDescriptionHL .sapMLabel{
+	font-size:				@sapMFontMediumSize;
+	color:					@sapHCStandardFG;
+}
+
+/* ************************************************************************************* */
+/* Borderless Design (Cozy Form Factor)                                                  */
+/* ************************************************************************************* */
+.sapMUC .sapMListShowSeparatorsNone {
+	.sapMUCFileName.sapMLnk {
+		font-size:			@sapMFontLargeSize;
+	}
+
+	/* ----------------------------------*/
+	/* Last List Item in Compact Mode    */
+	/* ----------------------------------*/
+	.sapMLIB.sapMUCListLastItem {
+		padding-bottom:		1rem;
+	}
+}
+
+
+
+/* ************************************************************************************* */
+/* Compact Form Factor                                                                   */
+/* ************************************************************************************* */
+.sapUiSizeCompact .sapMUC {
+	/* Text: Filename */
+	.sapMUCFileName.sapMLnk {
+	margin-top:			0.25rem;
+	font-size:			@sapMFontMediumSize;
+	}
+}
+
+
+
+
+/* ************************************************************************************* */
+/* local fixes: should be done by used simple controls
+/* ************************************************************************************* */
+.sapMUCItemIcon.sapUiIcon:focus,
+.sapMUCItemImage:focus {
+	outline-width:			0.125rem;
+	outline-style:			dotted;
+}

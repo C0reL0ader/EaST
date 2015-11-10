@@ -1,0 +1,48 @@
+/* =========================================== */
+/* CSS for control sap.m/Token.control ======= */
+/* High Contrast Black theme ================= */
+/* =========================================== */
+
+.sapMToken {
+	font-size: @sapMFontMediumSize;
+	background: @sapHCStandardBG;
+	border: 0.0625rem solid @sapHCStandardFG;
+	border-radius: 0.125rem;
+	color: @sapHCStandardFG;
+	padding-left: 0.375rem;
+}
+
+.sapMToken.sapMTokenReadOnly {
+	padding: 0.25rem 0.375rem;
+}
+
+.sapUiSizeCompact .sapMToken.sapMTokenReadOnly, .sapUiSizeCompact .sapMTokenIcon {
+	padding: 0.1rem 0.375rem;
+}
+
+.sapMToken:focus {
+	outline: none;
+}
+
+.sapMTokenSelected, .sapMToken:focus {
+	color: @sapHCStandardFG;
+	background: @sapHCHighlightAltBG;
+}
+
+.sap-desktop .sapMToken:hover {
+	background: @sapHCHighlightBG;
+}
+
+.sapMTokenSelected .sapMTokenIcon, .sapMToken:focus .sapMTokenIcon {
+	color: @sapHCStandardFG;
+}
+
+.sapMTokenIcon {
+	padding: 0.25rem 0.375rem;
+	font-size: @sapMFontSmallSize;
+	color: @sapHCStandardFG;
+}
+
+.sapMToken.sapMTokenActive {
+	background: @sapHCHighlightBG;
+}

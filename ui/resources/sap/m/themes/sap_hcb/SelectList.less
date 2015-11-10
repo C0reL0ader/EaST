@@ -1,0 +1,98 @@
+/* ===================================================================*/
+/* CSS for control sap.m/SelectList.control High Contrast Black theme */
+/* ================================================================== */
+
+/* ====================================================== */
+/* Select List                                            */
+/* ====================================================== */
+
+/* ------------------------------ */
+/* List                           */
+/* ------------------------------ */
+
+.sapMSelectList {
+	background: @sapHCStandardBG;
+}
+
+/* ------------------------------ */
+/* Item                           */
+/* ------------------------------ */
+
+.sapMSelectListItem {
+	font-size: @sapMFontMediumSize;
+	padding: 0 1rem 0 1rem;
+	height: 2.5rem;
+	line-height: 2.5rem;
+	cursor: pointer;
+	border-bottom: 0.0625rem @sapHCReducedAltFG solid;
+}
+
+/* selected */
+
+.sapMSelectListItemSelected {
+	background: @sapHCHighlightAltBG;
+}
+
+/* hover */
+
+.sapMSelectListItemHoverable:hover {
+	background: @sapHCHighlightBG;
+}
+
+/* pressed */
+
+.sapMSelectListItem.sapMSelectListItemPressed {
+	color: @sapHCStandardFG;
+	background: @sapHCHighlightBG;
+}
+
+/* disabled */
+
+.sapMSelectListItemDisabled {
+	opacity: 0.5;
+	color: @sapHCReducedFG;
+}
+
+/* focus */
+
+.sap-desktop li.sapMSelectListItem:focus {
+	outline: 0.125rem dotted @sapHCStandardFG;
+	outline-offset: -0.125rem;
+}
+
+/* IE does not support css outline-offset */
+
+html[data-sap-ui-browser^="ie"].sap-desktop li.sapMSelectListItem:focus {
+		outline: none;
+		position: relative;
+}
+
+html[data-sap-ui-browser^="ie"].sap-desktop li.sapMSelectListItem:focus::before {
+		content: "";
+		box-sizing: border-box;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		left: 0;
+		top: 0;
+		border: 0.125rem dotted @sapHCStandardFG;
+}
+
+/* ------------------------------ */
+/* SeparatorItem                  */
+/* ------------------------------ */
+
+.sapMSelectListSeparatorItem {
+	border: 1px solid @sapHCStandardFG;
+}
+
+/* Compact size  */
+
+/* ------------------------------ */
+/* commons styles                 */
+/* ------------------------------ */
+
+.sapUiSizeCompact .sapMSelectListItem {
+	height: 2rem;
+	line-height: 2rem;
+}

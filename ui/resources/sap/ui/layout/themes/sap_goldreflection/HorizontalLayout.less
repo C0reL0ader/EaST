@@ -1,0 +1,20 @@
+/* ====================================================== */
+/* CSS for control sap.ui.layout/HorizontalLayout.control */
+/* ====================================================== */
+
+.sapUiHLayout {
+	display: inline-block;
+}
+
+.sapUiHLayoutNoWrap {
+	white-space: nowrap;
+}
+
+.sapUiHLayoutChildWrapper {
+	white-space: normal;
+	display: inline-block;
+	vertical-align: top;
+}
+
+/* mixin call for creating container content padding classes (arguments: rootContainer, contentSelector) */
+.sapUiContainerContentPadding(~".sapUiHLayout");

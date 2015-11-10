@@ -1,0 +1,6 @@
+/*!
+ * SAP UI development toolkit for HTML5 (SAPUI5/OpenUI5)
+ * (c) Copyright 2009-2015 SAP SE or an SAP affiliate company.
+ * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
+ */
+sap.ui.define(['sap/ui/model/SimpleType'],function(S){"use strict";function d(f,t,r){var m,n,s="";t=t.replace(/\s/g,"");switch(t.charAt(0)){case f.minusSign:s="-";case f.plusSign:t=t.slice(1);break;}while((n=t.replace(f.groupingSeparator,""))!==t){t=n;}t=t.replace(f.decimalSeparator,".");m=r.exec(t);if(m){return s+(m[1]||"0")+(m[2]?"."+m[2]:"");}}function i(f){var s=true;jQuery.each(f||{},function(k){switch(k){case"decimalSeparator":case"decimals":case"groupingEnabled":case"groupingSeparator":case"maxFractionDigits":case"maxIntegerDigits":case"minFractionDigits":case"minIntegerDigits":case"minusSign":case"plusSign":break;default:s=false;return false;}});return s;}var O=S.extend("sap.ui.model.odata.type.ODataType",{constructor:function(f,c){},metadata:{"abstract":true}});O.prototype.setConstraints=function(c){};O.prototype.setFormatOptions=function(f){};O.normalizeNumber=function normalizeNumber(t,n,T,r){var R;if(i(t)){return d(n.oFormatOptions,T,r);}R=n.parse(T);return isNaN(R)?undefined:String(R);};return O;});
