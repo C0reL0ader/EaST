@@ -23,7 +23,7 @@ class FormPoster:
             for key in additional_headers:
                 request.add_header(key, additional_headers[key])
         request.add_data(body)
-        return urllib2.urlopen(request).read()
+        return request
 
     def _encode_multipart_formdata(self):
         """
@@ -80,3 +80,35 @@ class NoRedirection(urllib2.HTTPErrorProcessor):
 
     https_response = http_response
 
+def wordpress_auth(host, username, password):
+    """Returns opener and cookie
+        Example:
+             opener, cookie = wordpress_auth('http://www.wordpresssite.com', 'guest', 'guest')
+             res = opener.open('http://www.wordpresssite.com/wp-admin/profile.php')
+    """
+    cookie = cookielib.CookieJar()
+    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.0; rv:14.0) Gecko/20100101 Firefox/14.0.1',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'ru-ru,ru;q=0.8,en-us;q=0.5,en;q=0.3',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'DNT': '1'
+    }
+    payload = {
+        'log': username,
+        'pwd': password,
+        'wp-submit': 'Log+In',
+        'rememberme': 'forever',
+        'redirect_to': host+'wp-admin',
+        'testcookie': '1'
+    }
+    if host[-1] != '/' and host[-1] != '\\':
+        host += '/'
+    login_url = host + 'wp-login.php'
+    payload = urllib.urlencode(payload)
+
+    httpReq = urllib2.Request(login_url, payload, headers)
+    page = opener.open(httpReq)
+    return opener, cookie

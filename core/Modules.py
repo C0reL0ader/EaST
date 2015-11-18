@@ -162,6 +162,7 @@ def _attach(branch, module, trunk):
         trunk.append(module)
     else:
         node, others = parts
+        node = node.capitalize()
         node_obj = dict(NAME=node, DESCRIPTION=node, isFile=False)
         res, index = is_module_in_trunk(trunk, node)
         if res:

