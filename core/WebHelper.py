@@ -1,6 +1,10 @@
 import cookielib
 import urllib2
 import urllib
+import threading
+from BaseHTTPServer import HTTPServer
+from BaseHTTPServer import BaseHTTPRequestHandler
+
 
 class FormPoster:
     def __init__(self):
@@ -112,3 +116,44 @@ def wordpress_auth(host, username, password):
     httpReq = urllib2.Request(login_url, payload, headers)
     page = opener.open(httpReq)
     return opener, cookie
+
+class SimpleWebServerHandler(BaseHTTPRequestHandler):
+    CONTENT = ""
+    def do_GET(self):
+        self.send_response(200)
+        if 'admin.php' in self.path:
+            self.wfile.write(self.CONTENT)
+        self.wfile.write('')
+
+
+class SimpleWebServer():
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.httpd = None
+        self.thread = None
+
+    def start_with_content(self, content):
+        self.stop_serve()
+        try:
+            self.httpd = HTTPServer((self.host, self.port), SimpleWebServerHandler)
+            SimpleWebServerHandler.CONTENT = content
+            self.thread = threading.Thread(target=self.httpd.serve_forever, args=())
+            self.thread.start()
+            return (True, "OK")
+        except Exception as e:
+            return (False, e)
+
+
+    def stop_serve(self):
+        if self.httpd:
+            self.httpd.shutdown()
+        if self.thread:
+            self.thread.join()
+
+
+
+if __name__ == '__main__':
+    pass
+
+

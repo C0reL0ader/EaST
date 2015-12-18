@@ -31,13 +31,13 @@ sap.ui.jsview("mvc.Main", {
 
         var treeTemplate = new sap.ui.commons.TreeNode({
             text: "{NAME}",
-            tooltip: "{DESCRIPTION}",
             selectable: "{isFile}",
             icon: "{= ${isFile}? '' : 'sap-icon://folder-blank'}",
             selected: [oController.onTreeNodeSelected, oController],
             toggleOpenState: [oController.onNodeExpanded, treeTemplate],
             expanded: false
-        });
+        });        
+
         // speed up expand and collapse animation
         sap.ui.commons.TreeNode.ANIMATION_DURATION = 100;
 
@@ -62,17 +62,15 @@ sap.ui.jsview("mvc.Main", {
             }            
         }, oModulesTree);
 
-        var oModuleInfoTextView = new sap.ui.commons.TextArea(this.createId("Main_ModuleInfoTextView"), {
+        var oModuleInfoTextView = new sap.ui.commons.FormattedTextView(this.createId("Main_ModuleInfoTextView"), {
             width: "100%",
             height: "45%",
-            editable: false
         });
-        oModuleInfoTextView.addStyleClass("moduleInfoTextView");
-
-        var oModuleInfoLabel = new sap.ui.commons.Label({
-            text: "Module notes",
-            textAlign: sap.ui.core.TextAlign.Center,
-            design: sap.ui.commons.LabelDesign.Bold
+        var moduleInfoPanel = new sap.ui.commons.Panel({
+            height: "50%",
+            content: [oModuleInfoTextView],
+            showCollapseIcon: false,
+            text:"Module info"
         });
 
         //Create tab widget for log messages of running modules
@@ -115,9 +113,10 @@ sap.ui.jsview("mvc.Main", {
             width: "200px",
             valueLiveUpdate: true,
             height: "100%",
+            placeholder: "Type to search module...",
             liveChange: [oController.searchModules, searchTextBox]
         });
-        searchTextBox.setPlaceholder("Type to search module...");
+        searchTextBox.setPlaceholder();        
 
         var editorBtn = new sap.m.Button({
             icon: 'sap-icon://edit',
@@ -135,14 +134,14 @@ sap.ui.jsview("mvc.Main", {
             contentLeft: [searchTextBox, runModuleBtn, editorBtn],
             design: sap.m.BarDesign.Header
         });
+        
 
         mainPanel.addContent(headerToolar);
         mainPanel.addContent(subHeaderToolbar);
         mainPanel.addContent(oSplitterV);
 
         oSplitterV.addFirstPaneContent(oModulesTree);
-        oSplitterV.addFirstPaneContent(oModuleInfoLabel);
-        oSplitterV.addFirstPaneContent(oModuleInfoTextView);
+        oSplitterV.addFirstPaneContent(moduleInfoPanel);
         oSplitterV.addSecondPaneContent(tabsPanel);
         return mainPanel;
 

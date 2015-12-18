@@ -79,6 +79,7 @@ class Sploit():
         else:
             msg = "Module %s was failed" % self.name
         self.send_message(msg, is_successful)
+        sys.exit()
         return
 
 

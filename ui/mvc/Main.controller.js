@@ -46,7 +46,57 @@ sap.ui.controller("mvc.Main", {
 	},
 
 	onTreeNodeSelected: function(event){
-		mainView.byId("Main_ModuleInfoTextView").setValue(event.oSource.getBindingContext().getProperty('NOTES'));
+		var infoTextControl = mainView.byId("Main_ModuleInfoTextView");
+		infoTextControl.destroyControls();
+		var description = event.oSource.getBindingContext().getProperty('DESCRIPTION') || "n/a";
+		var vendor = event.oSource.getBindingContext().getProperty('VENDOR') || "n/a";
+		var cve = event.oSource.getBindingContext().getProperty('CVE Name') || "n/a";
+		var downlink = event.oSource.getBindingContext().getProperty('DOWNLOAD_LINK') || "n/a";
+		var notes = event.oSource.getBindingContext().getProperty('NOTES') || "n/a";
+		var links = event.oSource.getBindingContext().getProperty('LINKS');
+		var oLink = new sap.ui.commons.Link("cve_", {
+			text: cve,
+			href: "https://www.google.ru/search?q="+cve,
+			target: "_blank"
+		});
+		infoTextControl.addControl(oLink);
+		oLink = new sap.ui.commons.Link("dl_", {
+			text: downlink,
+			href: downlink,
+			target: "_blank"
+		});
+		infoTextControl.addControl(oLink);		
+
+		var embedLinks = "";
+		if ($.isArray(links)) {
+			links.forEach(function(el, index) {
+				oLink = new sap.ui.commons.Link("link_"+index, {
+					text: el,
+					href: el,
+					target: "_blank"
+				});
+				embedLinks += '<embed data-index=\"'+(index+2)+'\" />,  ';
+				infoTextControl.addControl(oLink);
+			});
+		}
+		else {
+			oLink = new sap.ui.commons.Link("link_"+0, {
+				text: links,
+				href: links,
+				target: "_blank"
+			});
+			infoTextControl.addControl(oLink);
+			embedLinks += '<embed data-index=\"2\" />';
+		}
+
+
+		var text = "<strong>Description:</strong> " + description + "<br>";
+        text += "<strong>Vendor:</strong> " + vendor + "<br>";
+        text += "<strong>CVE Name:</strong> <embed data-index=\"0\" /><br>";
+        text += "<strong>Download link:</strong> <embed data-index=\"1\" /><br>";
+        text += "<strong>Links:</strong> " +embedLinks+ "<br>";
+        text += "<strong>Notes:</strong> " + notes + "<br>";
+		infoTextControl.setHtmlText(text);
 	},
 
 	onNodeExpanded: function(oEvent) {

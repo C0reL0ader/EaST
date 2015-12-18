@@ -1,4 +1,5 @@
-﻿import subprocess
+﻿import os
+import subprocess
 import sys
 import json
 import logging
@@ -73,10 +74,11 @@ class Commands:
             if free_socket_data:
                 listener_options = dict(PORT=free_socket_data[0][1])
                 print listener_options
-            listener_process = subprocess.Popen([sys.executable, LISTENER], shell=False)
+
+            listener_process = subprocess.Popen([sys.executable, LISTENER], shell=False, env=os.environ.copy())
             self.listener_handler.addListener(new_module_name, listener_process, listener_options)
             self.server.add_process(listener_process)
-        process = subprocess.Popen([sys.executable, module_name], shell=False)
+        process = subprocess.Popen([sys.executable, module_name], shell=False, env=os.environ.copy())
         options = self.options_parser.parse_data(options)
         self.modules_handler.register_process(new_module_name, process, options)
         self.server.add_process(process)

