@@ -6,7 +6,7 @@ sap.ui.jsview("mvc.Main", {
 
         var mainPanel = new sap.ui.commons.Panel(this.createId("Main_Panel"), {
             title: new sap.ui.core.Title({
-                text: "Exploits and Simple Tools FRAMEWORK ver. {/version}",
+                text: "Exploits and Security Tools FRAMEWORK ver. {/version}",
                 level: sap.ui.core.TitleLevel.H3
             }),
             height: "100%",
@@ -109,10 +109,8 @@ sap.ui.jsview("mvc.Main", {
             design: sap.m.BarDesign.Footer
         });
 
-        var searchTextBox = new sap.m.Input(this.createId("SearchTextBox"), {
+        var searchTextBox = new sap.m.SearchField(this.createId("SearchTextBox"), {
             width: "200px",
-            valueLiveUpdate: true,
-            height: "100%",
             placeholder: "Type to search module...",
             liveChange: [oController.searchModules, searchTextBox]
         });

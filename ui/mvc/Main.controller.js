@@ -1,41 +1,5 @@
 sap.ui.controller("mvc.Main", {
-
-	/**
-	 * Called when a controller is instantiated and its View controls (if
-	 * available) are already created. Can be used to modify the View before it
-	 * is displayed, to bind event handlers and do other one-time
-	 * initialization.
-	 *
-	 */
-	// onInit: function() {
-	//
-	// },
-	/**
-	 * Similar to onAfterRendering, but this hook is invoked before the
-	 * controller's View is re-rendered (NOT before the first rendering!
-	 * onInit() is used for that one!).
-	 *
-	 */
-	// onBeforeRendering: function() {
-	//
-	// },
-	/**
-	 * Called when the View has been rendered (so its HTML is part of the
-	 * document). Post-rendering manipulations of the HTML could be done here.
-	 * This hook is the same one that SAPUI5 controls get after being rendered.
-	 *
-	 */
-	// onAfterRendering: function() {
-	//
-	// },
-	/**
-	 * Called when the Controller is destroyed. Use this one to free resources
-	 * and finalize activities.
-	 *
-	 */
-	// onExit: function() {
-	//
-	// }
+	
 	onTabClose: function(oEvent){
 		var tabName = oEvent.getParameter("name");
 		guiCommandsHandler.killProcess(tabName);
@@ -45,56 +9,85 @@ sap.ui.controller("mvc.Main", {
 		websocketHandler.reconnect();
 	},
 
-	onTreeNodeSelected: function(event){
+	onTreeNodeSelected: function(event){		
 		var infoTextControl = mainView.byId("Main_ModuleInfoTextView");
 		infoTextControl.destroyControls();
+		var indexOfCtrl = 0;
 		var description = event.oSource.getBindingContext().getProperty('DESCRIPTION') || "n/a";
-		var vendor = event.oSource.getBindingContext().getProperty('VENDOR') || "n/a";
-		var cve = event.oSource.getBindingContext().getProperty('CVE Name') || "n/a";
-		var downlink = event.oSource.getBindingContext().getProperty('DOWNLOAD_LINK') || "n/a";
+		var vendor = event.oSource.getBindingContext().getProperty('VENDOR');		
+		var cve = event.oSource.getBindingContext().getProperty('CVE Name');
+		var downlink = event.oSource.getBindingContext().getProperty('DOWNLOAD_LINK');
 		var notes = event.oSource.getBindingContext().getProperty('NOTES') || "n/a";
 		var links = event.oSource.getBindingContext().getProperty('LINKS');
-		var oLink = new sap.ui.commons.Link("cve_", {
-			text: cve,
-			href: "https://www.google.ru/search?q="+cve,
-			target: "_blank"
-		});
-		infoTextControl.addControl(oLink);
-		oLink = new sap.ui.commons.Link("dl_", {
-			text: downlink,
-			href: downlink,
-			target: "_blank"
-		});
-		infoTextControl.addControl(oLink);		
+		var vendorText  = "n/a";
+		var cveText = "n/a";
+		var downlinkText = "n/a";
+		var linkText = "n/a";
 
-		var embedLinks = "";
-		if ($.isArray(links)) {
-			links.forEach(function(el, index) {
-				oLink = new sap.ui.commons.Link("link_"+index, {
-					text: el,
-					href: el,
+		if (vendor) {
+			if (vendor.trim().toLowerCase().startsWith('http')) {
+				var oLink = new sap.ui.commons.Link("vendor_", {
+					text: vendor,
+					href: vendor,
 					target: "_blank"
 				});
-				embedLinks += '<embed data-index=\"'+(index+2)+'\" />,  ';
 				infoTextControl.addControl(oLink);
-			});
+				vendorText = '<embed data-index=\"'+indexOfCtrl+'\" />';
+				indexOfCtrl += 1;
+			}
+			else {
+				vendorText = vendor;
+			}
 		}
-		else {
-			oLink = new sap.ui.commons.Link("link_"+0, {
-				text: links,
-				href: links,
+		if (cve) {
+			var oLink = new sap.ui.commons.Link("cve_", {
+				text: cve,
+				href: "https://www.google.ru/search?q="+cve,
 				target: "_blank"
 			});
 			infoTextControl.addControl(oLink);
-			embedLinks += '<embed data-index=\"2\" />';
+			cveText = '<embed data-index=\"'+indexOfCtrl+'\" />';
+			indexOfCtrl += 1;
 		}
-
+		if (downlink) {
+			oLink = new sap.ui.commons.Link("dl_", {
+				text: downlink,
+				href: downlink,
+				target: "_blank"
+			});
+			infoTextControl.addControl(oLink);
+			indexOfCtrl += 1;
+		}
+		if (links) {
+			if ($.isArray(links)) {
+				linkText = "";
+				links.forEach(function(el, index) {
+					oLink = new sap.ui.commons.Link("link_"+index, {
+						text: el,
+						href: el,
+						target: "_blank"
+					});
+					linkText += '<embed data-index=\"'+ indexOfCtrl +'\" />,  ';
+					infoTextControl.addControl(oLink);
+					indexOfCtrl += 1;
+				});
+			}
+			else {
+				oLink = new sap.ui.commons.Link("link_"+0, {
+					text: links,
+					href: links,
+					target: "_blank"
+				});
+				infoTextControl.addControl(oLink);
+				linkText += '<embed data-index=\"'+ indexOfCtrl +'\" />';
+			}
+		}		
 
 		var text = "<strong>Description:</strong> " + description + "<br>";
-        text += "<strong>Vendor:</strong> " + vendor + "<br>";
-        text += "<strong>CVE Name:</strong> <embed data-index=\"0\" /><br>";
-        text += "<strong>Download link:</strong> <embed data-index=\"1\" /><br>";
-        text += "<strong>Links:</strong> " +embedLinks+ "<br>";
+        text += "<strong>Vendor:</strong> " + vendorText + "<br>";
+        text += "<strong>CVE Name:</strong> " + cveText + "<br>";
+        text += "<strong>Download link:</strong> " + downlinkText + "<br>";
+        text += "<strong>Links:</strong> " + linkText + "<br>";
         text += "<strong>Notes:</strong> " + notes + "<br>";
 		infoTextControl.setHtmlText(text);
 	},
@@ -128,16 +121,21 @@ sap.ui.controller("mvc.Main", {
 	},
 
 	searchModules: function(event){
-		var textToSearch = event.getParameters().value;		
+		var textToSearch = event.getParameters().newValue;		
 		var oModulesTree = mainView.byId("Main_ModulesTree");
 		var binding = oModulesTree.getBinding("nodes");
 		if (!textToSearch){
 			binding.filter([]);
 			return;
 		}
-		var oFilter = new sap.ui.model.Filter("NAME", "Contains", textToSearch);
+		var oNameFilter = new sap.ui.model.Filter("NAME", "Contains", textToSearch);
+		var oDescFilter = new sap.ui.model.Filter("DESCRIPTION", "Contains", textToSearch);
+		var oCveFilter = new sap.ui.model.Filter("CVE Name", "Contains", textToSearch);
+		var oVendorFilter = new sap.ui.model.Filter("VENDOR", "Contains", textToSearch);
+
 		var oFileFilter = new sap.ui.model.Filter("isFile", sap.ui.model.FilterOperator.EQ, true);
-		binding.filter([oFilter, oFileFilter]);
+		var orFilter = new sap.ui.model.Filter([oNameFilter, oCveFilter, oDescFilter, oVendorFilter]);
+		binding.filter([orFilter, oFileFilter]);
 		if(textToSearch)
 			oModulesTree.expandAll();
 	},

@@ -160,7 +160,7 @@ ServerCommandsHandler.prototype = {
         var dialog =  runDialogView.byId("RunDialog_Dialog");
         var target = mainView.byId("Main_Target").getValue().split(':');
         var host = target[0];
-        var port = target[1];
+        var port = target[1];        
         //change host and port if available
         for(var index in args){
             if(!args.hasOwnProperty(index))
@@ -168,9 +168,9 @@ ServerCommandsHandler.prototype = {
             var entry = args[index];
             if(entry == null)
                 continue;
-            if(entry["option"].toLowerCase() === "host")
+            if(entry["option"].toLowerCase() === "host" && host)
                 entry.value.value = host;
-            if(entry["option"].toLowerCase() === "port")
+            if(entry["option"].toLowerCase() === "port" && port)
                 entry.value.value = port;
         }
         oOptionsModel = new sap.ui.model.json.JSONModel();
@@ -201,21 +201,3 @@ ServerCommandsHandler.prototype = {
         bind(this.commands[command](args),this);
     },
 };
-
-Array.prototype.hasObject = (
-  !Array.indexOf ? function (o)
-  {
-    var l = this.length + 1;
-    while (l -= 1)
-    {
-        if (this[l - 1] === o)
-        {
-            return true;
-        }
-    }
-    return false;
-  } : function (o)
-  {
-    return (this.indexOf(o) !== -1);
-  }
-);
