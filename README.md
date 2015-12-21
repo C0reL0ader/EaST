@@ -1,1 +1,1 @@
-Exploits and Simple Tools Framework. See more at http://eastfw.com/
+Exploits and Security Tools Framework. See more at http://eastfw.com/
