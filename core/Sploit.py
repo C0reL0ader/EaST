@@ -13,7 +13,19 @@ from websocket import create_connection
 PORT = 49999
 HOST = "localhost"
 
-class Sploit():
+#simple common exception handler for method run
+def _deco(self, func):
+    def wrapper():
+        try:
+            res = func()
+        except Exception as e:
+            res = None
+            self.log(e)
+            self.finish(False)
+        return res
+    return wrapper
+
+class Sploit:
     """
         This is the base class for all exploits in the tool.
     """
@@ -28,8 +40,11 @@ class Sploit():
         self.pid = os.getpid()
         self.logger = logging.getLogger()
         self.connection = create_connection("ws://%s:%s" % (HOST, PORT), timeout=None, fire_cont_frame=True)
+        self.run = _deco(self, self.run)
         return
-    
+
+
+
     def args(self, options={}):
         """
             This function get required options from server.
@@ -52,22 +67,25 @@ class Sploit():
             target is vulnerable or not.
         """
         return
-    
+
     def run(self):
         """
             The main function that does all of the magic.
             It returns 0 on failed and 1 on success.
         """
-        return 
+        return
 
-    def log(self, message):
+    def log(self, message='', inline=False, replace=False):
         """
             This function provides necessary routines
-            for logging any results of the exploit.            
+            for logging any results of the exploit.
+            :param message: Message to log
+            :param inline: Prints log inline
+            :param replace: Replace last log message
         """
-        self.send_message(message)
+        self.send_message(message, inline=inline, replace=replace)
         return
-    
+
     def finish(self, is_successful):
         """
             This function finishes module execution
@@ -94,7 +112,7 @@ class Sploit():
             filename = "response_" + time.strftime("%b_%d_ %Y_%H-%M-%S", time.gmtime()) + ".html"
         if not os.path.exists(dirname):
             try:
-                os.makedirs(dirname) 
+                os.makedirs(dirname)
             except Exception, exception:
                 """
                 ! The kind of error sould be
@@ -112,20 +130,19 @@ class Sploit():
             fd.write(filedata)
         except Exception:
             self.logger.error("An error has occured during writing output : <%s>" % (str(sys.exc_info()[1])))
-            return 0            
+            return 0
         fd.close()
         self.log("wrote to %s" % filepath)
         return 1
 
-    def send_message(self, message, is_successful=None):
+    def send_message(self, message, is_successful=None, inline=False, replace=False):
         self.logger.debug(message)
-        args = dict(pid=self.pid, module_name=self.name, message=str(message).decode("cp1251").encode("utf-8"), state=is_successful)
+        args = dict(pid=self.pid, module_name=self.name, message=str(message).decode("cp1251").encode("utf-8"),
+                    state=is_successful, inline=inline, replace=replace)
         req = dict(command="message", args=args)
         self.connection.send(json.dumps(req))
         if is_successful is not None:
             self.connection.close()
-
-
 
 if __name__ == "__main__":
     s = Sploit()

@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 class OptionsParser:
     def __init__(self):
         pass
@@ -18,7 +20,7 @@ class OptionsParser:
         return res
 
     def prepare_options(self, options):
-        res = {}
+        res = OrderedDict()
         for option in options.keys():
             value = options[option]
             if type(value) is int:

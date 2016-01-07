@@ -11,9 +11,10 @@ import importlib
 from core.WebSocketServer import ThreadedServer, WebSocketsHandler
 
 sys.path.append("./core")
+sys.path.append("./core/Helpers/Java")
 sys.path.append("./shellcodes")
 
-VERSION = "0.9.4"
+VERSION = "0.9.5"
 
 class FrameworkStarter:
     def __init__(self, host="localhost", ws_port=49999, port=80):

@@ -14,7 +14,9 @@ function ServerCommandsHandler() {
                      "get_source": bind(this.getSource),
                     };
     this.statuses = [];
+    this.waitingSymbol = "\\";
 };
+var waitingSymbols = ["\\", "|", "/", "-"];
 
 ServerCommandsHandler.prototype = {
 
@@ -32,6 +34,15 @@ ServerCommandsHandler.prototype = {
         }, 300);
     },
 
+    genNextWaitSymbol: function() {
+        var index = waitingSymbols.indexOf(this.waitingSymbol)
+        if(index+1 < waitingSymbols.length) {
+            this.waitingSymbol = waitingSymbols[index + 1];
+        } else {
+            this.waitingSymbol = waitingSymbols[0];
+        }
+    },
+
     showStatus: function(args){
         ///modulesTab[key][i]
         // key = module_name
@@ -39,20 +50,40 @@ ServerCommandsHandler.prototype = {
         // i == 1 - tabHeader
         // i == 2 - tabListener
         // i == 3 - shell connected
+        serverCommandsHandler.genNextWaitSymbol();
 
         Object.keys(args).forEach(function(key) {
             if(!modulesTabs.hasOwnProperty(key))
                 return;
             var logMessage = args[key].message;
             var state = args[key].state;
-            var isThereNewLogMessages = args[key].new_messages
-
+            var isThereNewLogMessages = args[key].new_messages;
+            var currentTab = modulesTabs[key][0].tab;
+            var activeTabKey = mainController.getActiveTabKey();
             var logTabLabel = modulesTabs[key][0].text;
             var logPanel = modulesTabs[key][0].panel;
 
+            //change title and content only for current active tab
+            if (currentTab.getId() === activeTabKey) {
+                if (state == null) {
+                    logMessage += "\r\n" + serverCommandsHandler.waitingSymbol;
+                    document.title = "In progress...";
+                    logTabLabel.setText(logMessage);
+                }
+                else {
+                    if(state) {
+                        document.title = "Success";
+                    } else {
+                        document.title = "Failed";
+                    }
+                }
+            }
+            logTabLabel.setText(logMessage);
             if(isThereNewLogMessages){
                 logTabLabel.setText(logMessage);
-                logPanel.setScrollTop(logPanel.$().find('.sapUiPanelCont')[0].scrollHeight);
+                var elem = logPanel.setScrollTop(logPanel.$().find('.sapUiPanelCont'))[0];
+                if(elem)
+                    elem.scrollHeight;
             }
 
             if(state!=null && modulesTabs[key][0].tab.getState() == null) {
@@ -74,11 +105,7 @@ ServerCommandsHandler.prototype = {
                     if (isShellConnected) {
                         var listenerTitle = "Listener was connected to shell:";
                         if (!modulesTabs[key].hasOwnProperty("shellConnected")) {
-                            sap.m.MessageToast.show("Shell connected to " + key + " listener", {
-                                my: "center center",
-                                at: "center center",
-                                duration: 1000
-                            });
+                            serverCommandsHandler.showMessageBox("Shell connected to " + key + " listener");
                             modulesTabs[key]["shellConnected"]=true;
                         }
                         if (isShellConnected === 2){
@@ -199,5 +226,13 @@ ServerCommandsHandler.prototype = {
         var command = parsed["command"];
         var args = parsed["args"];
         bind(this.commands[command](args),this);
+    },
+
+    showMessageBox: function(message) {
+        sap.m.MessageToast.show(message, {
+            my: "center center",
+            at: "center center",
+            duration: 1000
+        });
     },
 };

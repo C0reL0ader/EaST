@@ -241,6 +241,12 @@ sap.ui.controller("mvc.Main", {
 			if(subNode.getIsSelected()) _checkedNodes.push(subNode);
 			mainController._getCheckedSubNodes(subNode);
 		});
-	}
+	},
+
+	getActiveTabKey: function(node) {
+        var oTabStripWidget = mainView.byId("Main_LogTabsWidget");
+        var key = oTabStripWidget.getSelectedKey();
+        return key;
+    }
 
 });

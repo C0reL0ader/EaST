@@ -35,10 +35,16 @@ class ModulesHandler:
         self.logger = logging.getLogger()
         self.logger.info("Initializing modules handler")
 
-    def add(self, pid, message, state=None):
+    def add(self, pid, new_message, state=None, inline=False, replace=False):
         module_name = self.get_module_name_by_pid(pid)
         if module_name in self.processes:
-            self.processes[module_name].log.append(ModuleMessageElement(message))
+            if inline:
+                current_message = self.processes[module_name].log[-1].message
+                self.processes[module_name].log[-1].message = current_message + new_message
+            else:
+                self.processes[module_name].log.append(ModuleMessageElement(new_message))
+            if replace:
+                self.processes[module_name].log[-1].message = new_message
             self.processes[module_name].new_messages = True
             if state is not None:
                 self.processes[module_name].state = state
@@ -102,7 +108,7 @@ class ModulesHandler:
         """
         res = []
         for name in names:
-            module = self.import_from_uri(name[0]+name[1])
+            module = self.import_from_uri(name[0])
             if hasattr(module, 'INFO'):
                 module.INFO["NAME"] = name[1]
                 res.append(module.INFO)
@@ -141,14 +147,13 @@ class ModulesHandler:
                 return module_name
         return None
 
-
-def get_modules_names(path_to_files):
+def get_modules_names_dict(path_to_files):
     """Get list of .py files names in directory"""
     files = os.listdir(path_to_files)
-    res = []
+    res = {}
     for filename in files:
         if filename.endswith(".py"):
-            res.append(filename[:-3])
+            res[filename[:-3]] = os.path.join(path_to_files, filename)
     return res
 
 

@@ -12,6 +12,7 @@ from OptionsParser import OptionsParser
 
 EXPLOITS_PATH = "./exploits/"
 LISTENER = "./listener/listener.py"
+PACKS_PATH = "3rdParty/"
 
 
 class Commands:
@@ -32,12 +33,28 @@ class Commands:
                          }
         self.server = server
         self.using_module = ""
-        self.available_modules = Modules.get_modules_names(EXPLOITS_PATH)
+        self.available_modules = self.get_all_modules_paths()
         self.modules_handler = ModulesHandler(server)
         self.listener_handler = ListenerHandler(server)
         self.logger = logging.getLogger()
         self.options_parser = OptionsParser()
         self.port_scanner = PortScannerMT.Scanner(4000, 5000)
+
+    def get_all_modules_paths(self):
+        """Get common modules and modules from packs if available"""
+        exploits = Modules.get_modules_names_dict(EXPLOITS_PATH)
+        if not os.path.exists(PACKS_PATH):
+            os.makedirs(PACKS_PATH)
+        files = os.listdir(PACKS_PATH)
+        packs = []
+        for f in files:
+            path_to_pack = os.path.join(PACKS_PATH, f)
+            if os.path.isdir(path_to_pack):
+                pack_dirs = [fname.lower() for fname in os.listdir(path_to_pack)]
+                if "exploits" in pack_dirs:
+                    full_path_to_pack_exploits = os.path.join(path_to_pack, "exploits")
+                    exploits.update(Modules.get_modules_names_dict(full_path_to_pack_exploits))
+        return exploits
 
     def execute(self, message, request):
         """
@@ -63,9 +80,9 @@ class Commands:
                            key 'listener' => (bool) Use listener
                            key 'listener_options' => (dict) Listener options
         """
-        if args["module_name"] not in self.available_modules:
+        if args["module_name"] not in self.available_modules.keys():
             return
-        module_name = EXPLOITS_PATH + args["module_name"] + ".py"
+        module_name = self.available_modules[args["module_name"]]
         use_listener = args["use_listener"]
         options = args["options"]
         new_module_name = self.modules_handler.make_unique_name(args["module_name"])
@@ -100,8 +117,8 @@ class Commands:
         Send server data to gui(version, available modules)
         """
         data = []
-        for name in self.available_modules:
-            data.append([EXPLOITS_PATH, name])
+        for name in self.available_modules.keys():
+            data.append([self.available_modules[name], name])
         available_modules = self.modules_handler.get_modules_info(data)
         
         # Get framework version
@@ -157,15 +174,20 @@ class Commands:
         @param (dict)args: (string)'message'=>Message from module;
                            (bool)'state'=>State of module(success, fail or nothing);
                            (int)'pid'=>Process ID of module
+                           (bool)'inline'=>Write on last line if True
+                           (bool)'replace'=>Replace last line if True
         """
+        inline = args.get("inline", False)
+        replace = args.get("replace", False)
         if "message" in args.keys() and "state" in args.keys() and "pid" in args.keys():
-            self.modules_handler.add(args["pid"], args["message"], args["state"])
+            self.modules_handler.add(args["pid"], args["message"], args["state"], inline, replace)
 
     def get_module_options(self, args, request):
         """Send options of module to gui
         @param (dict)args: (string)'module_name'=>Name of module
         """
-        opts = self.modules_handler.get_available_options_for_module(EXPLOITS_PATH + args["module_name"])
+        if args["module_name"] in self.available_modules.keys():
+            opts = self.modules_handler.get_available_options_for_module(self.available_modules[args["module_name"]])
         opts = self.options_parser.prepare_options(opts)
         json_resp = []
         for key in opts.keys():
@@ -222,7 +244,7 @@ class Commands:
         Get source code of module
         """
         module_name = args['module_name']
-        with open(EXPLOITS_PATH+module_name+".py") as file:
+        with open(self.available_modules[args['module_name']]) as file:
             lines = file.read().splitlines()
             source = "\n".join(lines)
         resp = dict(command="get_source", args=dict(message=source, module_name=module_name))
@@ -232,9 +254,8 @@ class Commands:
         """
         Save edited source code of module
         """
-        module_name = args['module_name']
         code = args['message'].encode('utf-8')
-        f = open(EXPLOITS_PATH+module_name+'.py','w')
+        f = open(self.available_modules[args['module_name']],'w')
         f.write(code)
         f.close()
 

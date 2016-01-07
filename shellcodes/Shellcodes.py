@@ -219,7 +219,7 @@ class JavaShellcodes:
         self.name = ""
         return
 
-    def get_javacode(self, badchars, localhost, localport):
+    def get_javacode(self, localhost, localport):
         """ Function to get java(jsp) shellcode """
 
         if not localhost or not localport:
