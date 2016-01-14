@@ -23,6 +23,13 @@ class Constants:
         ROT_13 = "rot_13"
         FNSTENV_XOR = "fnstenv"
         JUMPCALL_XOR = "jumpcall"
+    class ShellcodeType:
+        JAVA = "java"
+        PYTHON = "python"
+        PHP = "php"
+    class JavaShellcodeType:
+        JSP = "jsp"
+        JAR = "jar"
 
 
 def search_file(filename, search_path, iterations=3):
@@ -221,3 +228,9 @@ def make_exe_from_obj(o_file, os_target, os_target_arch, debug=0):
 
 def make_exe_from_shellcode(shellcode):
     pass
+
+def read_binary(filename):
+    content = ''
+    with open(filename, 'rb') as f:
+        content = f.read()
+    return content
