@@ -1,4 +1,5 @@
 ﻿import datetime
+import sys
 import os
 import imp
 import logging
@@ -98,8 +99,13 @@ class ModulesHandler:
         if os.path.exists(no_ext + '.py'):
             try:
                 return imp.load_source(mname, no_ext + '.py')
-            except:
-                pass
+            except Exception as e:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                line_no = exc_traceback.tb_next.tb_lineno
+                message = "Error in module {module}: \"{e}\" on line {line}".format(module=mname, e=e, line=line_no)
+                logger = logging.getLogger()
+                logger.error(message)
+                print(message)
 
     def get_modules_info(self, names):
         """Gets info about given modules

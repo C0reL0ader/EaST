@@ -5,11 +5,9 @@ sap.ui.jsview("mvc.CodeEditor", {
     },
 
     createContent : function(oController) {
-        var textview = new sap.ui.core.HTML(this.createId('CodeEditor_Editor'), {
-            content: '<textarea id="textareaeditor"></textarea>',
-            afterRendering: oController.loadEditor,
+        var htmlControl = new sap.ui.core.HTML(this.createId('CodeEditor_Editor'), {
+            content: '<textarea id="textareaeditor"></textarea>'
         });
-        //var myCodeMirror = CodeMirror.fromTextArea(document.getElementById('CodeEditor_Editor'));
 
         var dialog =  new sap.ui.commons.Dialog(this.createId("CodeEditor_Dialog"), {
             modal: true,
@@ -24,13 +22,9 @@ sap.ui.jsview("mvc.CodeEditor", {
                     press: [oController.closeDialog, dialog]
                 }),
             ],
-            content:[textview]
+            content:[htmlControl],
         });
         return dialog;
     },
-
-    onAfterRendering: function(){
-        alert('Loaded');
-    }
 
 });

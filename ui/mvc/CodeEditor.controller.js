@@ -7,8 +7,10 @@ sap.ui.controller("mvc.CodeEditor", {
         var editor = CodeMirror.fromTextArea(textArea, {
             lineNumbers: true,
             indentUnit: 4,
-            mode: "python"
+            mode: "python",
+            autofocus: true
         });
+        editor.refresh();
     },
 
     saveModule: function(event){

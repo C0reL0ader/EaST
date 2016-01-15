@@ -214,6 +214,7 @@ ServerCommandsHandler.prototype = {
         dialog.setModel(model);
         dialog.setTitle(args['module_name']);
         dialog.open();
+        codeEditorDialogController.loadEditor();
 
     },
 

@@ -56,6 +56,7 @@ sap.ui.controller("mvc.Main", {
 				target: "_blank"
 			});
 			infoTextControl.addControl(oLink);
+			downlinkText = '<embed data-index=\"'+indexOfCtrl+'\" />';
 			indexOfCtrl += 1;
 		}
 		if (links) {

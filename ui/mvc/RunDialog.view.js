@@ -18,15 +18,18 @@ sap.ui.jsview("mvc.RunDialog", {
         });
         var divider = new sap.ui.commons.HorizontalDivider();
         var oMatrixLayout = new sap.ui.commons.layout.MatrixLayout(this.createId("RunDialog_MatrixLayout"),{
-            layoutFixed: true,
-                width:"auto",
-                widths:["auto", "auto"]
+            layoutFixed: false,
+            width:"auto",
+            widths:["auto", "100%"]
         });
         oMatrixLayout.bindAggregation("rows", "/", function(sId, oContext){
             var type = oContext.getProperty("value/type");
             var control;
             if (type === 'list'){
-                control = new sap.ui.commons.DropdownBox({selectedKey: "{value/selected}"});
+                control = new sap.ui.commons.DropdownBox({
+                    selectedKey: "{value/selected}",
+                    width: "100%"
+                });
                 control.bindAggregation("items", "value/options/", function(sId, oContext){
                     return new sap.ui.core.ListItem({text: "{}", key: "{}"})
                 });
@@ -41,14 +44,15 @@ sap.ui.jsview("mvc.RunDialog", {
             }
             else {
                 control = new sap.ui.commons.TextField({
-                    value: '{value/value}'
+                    value: '{value/value}',
+                    width: '100%'
                 });
             }
 
             return new sap.ui.commons.layout.MatrixLayoutRow({
                 cells: [
                     new sap.ui.commons.layout.MatrixLayoutCell({
-                        content: new sap.ui.commons.Label({text:"{option}", width: "auto"})
+                        content: new sap.ui.commons.Label({text:"{option}:", width: "100%"})
                     }),
                     new sap.ui.commons.layout.MatrixLayoutCell({
                         content: control
@@ -68,6 +72,7 @@ sap.ui.jsview("mvc.RunDialog", {
                     press: [oController.closeDialog, dialog]
                 }),
             ],
+            width: "30%",
             content:[vListenerLayout, divider, oMatrixLayout]
         });
         return dialog;
