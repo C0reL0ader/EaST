@@ -3,6 +3,7 @@ import sys
 import os
 import imp
 import logging
+import traceback
 
 
 class ModuleMessageElement:
@@ -99,13 +100,15 @@ class ModulesHandler:
         if os.path.exists(no_ext + '.py'):
             try:
                 return imp.load_source(mname, no_ext + '.py')
-            except Exception as e:
+            except:
+                res = []
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                line_no = exc_traceback.tb_next.tb_lineno
-                message = "Error in module {module}: \"{e}\" on line {line}".format(module=mname, e=e, line=line_no)
-                logger = logging.getLogger()
-                logger.error(message)
-                print(message)
+                formatted_lines = traceback.format_exc().split('\n')
+                res.append(formatted_lines[0])
+                res.extend(formatted_lines[3:])
+                msg = '\r\n'.join(res)
+                print("\r\n")
+                print(msg)
 
     def get_modules_info(self, names):
         """Gets info about given modules
