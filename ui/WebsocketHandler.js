@@ -1,7 +1,7 @@
 var WebsocketHandler= function() {
     this.connectionString = 'ws://'+window.location.hostname+':49999/';
     this.websocket = new WebSocket(this.connectionString);
-    this.websocket.onopen = bind(this.onOpen, this);
+    this.websocket.onopen = this.onOpen;
     this.websocket.onclose = this.onClose;
     this.websocket.onmessage = this.onMessage;
     this.websocket.onerror = this.onError;
@@ -9,15 +9,23 @@ var WebsocketHandler= function() {
 
 WebsocketHandler.prototype = {
     initData: function (evt) {
-        jQuery.sap.require("sap.m.MessageBox");
-        guiCommandsHandler.getAllData(doSend);
+        // Gets modules names, version, etc
+        guiCommandsHandler.getAllData(function(evt) {
+            var oData = evt.args;
+            this.oModulesInfoModel = new sap.ui.model.json.JSONModel();
+            this.oModulesInfoModel.setData(oData);
+            mainView.setModel(this.oModulesInfoModel);
+        });
         mainController.setConnectionState(true);
-        sap.m.MessageToast.show("Connected to "+this.websocket.url, {my:"center center", at:"center center", duration:1000});
-        guiCommandsHandler.restoreTabs(doSend);
+        showMessageBox("Connected to "+this.websocket.url);
+        if (!window.statusTimer) {
+            //Check for log and listener messages every 300ms
+            statusTimer = setInterval(mainController.getModulesLog, 300);
+        }
     },
 
     onOpen: function(evt) {
-        bind(this.initData(evt), this);
+        websocketHandler.initData(evt);
         console.log("Websocket opened");
     },
 
@@ -35,20 +43,19 @@ WebsocketHandler.prototype = {
     },
 
     onError: function(evt) {
-        jQuery.sap.require("sap.m.MessageBox");
-        sap.m.MessageBox.alert('Disconnected from server');
-        this.websocket.close();
+        showMessageBox('Disconnected from server');
+        websocketHandler.websocket.close();
     },
 
     doSend: function(message) {
-        this.websocket.send(JSON.stringify(message));
+        websocketHandler.websocket.send(JSON.stringify(message));
     },
 
     reconnect: function(){
-        this.websocket = new WebSocket(this.connectionString);
-        this.websocket.onopen = bind(this.onOpen, this);
-        this.websocket.onclose = this.onClose;
-        this.websocket.onmessage = this.onMessage;
-        this.websocket.onerror = this.onError;
+        websocketHandler.websocket = new WebSocket(this.connectionString);
+        websocketHandler.websocket.onopen = bind(this.onOpen, this);
+        websocketHandler.websocket.onclose = this.onClose;
+        websocketHandler.websocket.onmessage = this.onMessage;
+        websocketHandler.websocket.onerror = this.onError;
     }
 }

@@ -26,7 +26,7 @@ sap.ui.jsview("mvc.Main", {
         var oModulesTree = new sap.ui.commons.Tree(this.createId("Main_ModulesTree"), {
             title: "Available modules",
             width: "100%",
-            height: "50%"
+            height: "50%",
         });        
 
         var treeTemplate = new sap.ui.commons.TreeNode({
@@ -43,25 +43,9 @@ sap.ui.jsview("mvc.Main", {
 
         //Add mouse dbl click event to template
         treeTemplate.addEventDelegate({
-            ondblclick: oController.onTreeNodeDblClick
+            ondblclick: oController.runModule
         }, treeTemplate);
         oModulesTree.bindNodes({name: "nodes", path: "/modules/", template: treeTemplate});
-
-
-        oModulesTree.addEventDelegate({
-            onAfterRendering: function() {
-                var nodes = this.getNodes();
-                if (!nodes.length)
-                    return;
-                _.forEach(nodes, function(node){
-                    if (node.getExpanded())
-                        node.setIcon('sap-icon://open-folder');
-                    else
-                        node.setIcon("sap-icon://folder-blank");
-                });
-            }            
-        }, oModulesTree);
-
         var oModuleInfoTextView = new sap.ui.commons.FormattedTextView(this.createId("Main_ModuleInfoTextView"), {
             width: "100%",
             height: "45%",
@@ -101,7 +85,7 @@ sap.ui.jsview("mvc.Main", {
         var targetTextBox = new sap.m.Input(this.createId("Main_Target"), {
             width: "200px",
             height: "100%",
-            value: "127.0.0.1:80"
+            placeholder: "127.0.0.1:80",
         });
 
         var headerToolar = new sap.m.Bar({
@@ -111,10 +95,9 @@ sap.ui.jsview("mvc.Main", {
 
         var searchTextBox = new sap.m.SearchField(this.createId("SearchTextBox"), {
             width: "200px",
-            placeholder: "Type to search module...",
+            placeholder: "Type to search...",
             liveChange: [oController.searchModules, searchTextBox]
         });
-        searchTextBox.setPlaceholder();        
 
         var editorBtn = new sap.m.Button({
             icon: 'sap-icon://edit',
@@ -124,7 +107,7 @@ sap.ui.jsview("mvc.Main", {
 
         var runModuleBtn = new sap.m.Button({
             icon: 'sap-icon://media-play',
-            press: oController.onTreeNodeDblClick,
+            press: oController.runModule,
             tooltip: "Run selected module"
         });
 

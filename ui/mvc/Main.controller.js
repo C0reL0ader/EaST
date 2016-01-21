@@ -1,15 +1,33 @@
 sap.ui.controller("mvc.Main", {
-	
+
+	onInit: function() {
+		waitingSymbols = ["\\", "|", "/", "-"];
+		currentWaitingSymbolIndex = 0;
+		listenerCommands = [{text:""}];
+	},
+
+	getWaitingSymbol: function() {
+		if(currentWaitingSymbolIndex === waitingSymbols.length - 1){
+			currentWaitingSymbolIndex = 0;
+		} else {
+			currentWaitingSymbolIndex += 1;
+		}
+		return waitingSymbols[currentWaitingSymbolIndex];
+	},
+
 	onTabClose: function(oEvent){
+		///Fires when tab close button clicked
 		var tabName = oEvent.getParameter("name");
-		guiCommandsHandler.killProcess(tabName);
+		guiCommandsHandler.killProcess(tabName); //Request to kill process on server side
+		modulesTabs[tabName].tab.destroy();//Destroy tab and its children
+		delete modulesTabs[tabName]; //Remove tab object from modulesTabs
 	},
 
 	reconnect: function(){
 		websocketHandler.reconnect();
 	},
 
-	onTreeNodeSelected: function(event){		
+	onTreeNodeSelected: function(event){
 		var infoTextControl = mainView.byId("Main_ModuleInfoTextView");
 		infoTextControl.destroyControls();
 		var indexOfCtrl = 0;
@@ -23,10 +41,11 @@ sap.ui.controller("mvc.Main", {
 		var cveText = "n/a";
 		var downlinkText = "n/a";
 		var linkText = "n/a";
+		var oLink;
 
 		if (vendor) {
 			if (vendor.trim().toLowerCase().startsWith('http')) {
-				var oLink = new sap.ui.commons.Link("vendor_", {
+				oLink = new sap.ui.commons.Link("vendor_", {
 					text: vendor,
 					href: vendor,
 					target: "_blank"
@@ -40,7 +59,7 @@ sap.ui.controller("mvc.Main", {
 			}
 		}
 		if (cve) {
-			var oLink = new sap.ui.commons.Link("cve_", {
+			oLink = new sap.ui.commons.Link("cve_", {
 				text: cve,
 				href: "https://www.google.ru/search?q="+cve,
 				target: "_blank"
@@ -93,55 +112,74 @@ sap.ui.controller("mvc.Main", {
 		infoTextControl.setHtmlText(text);
 	},
 
-	onNodeExpanded: function(oEvent) {
+	onNodeExpanded: function() {
 		if (!this.getExpanded())
             this.setIcon('sap-icon://open-folder');
         else
             this.setIcon("sap-icon://folder-blank");
 	},
 	
-	addTab: function (tab_name, use_listener){
+	addTab: function (tab_name, listener){
+		///Creates new tab and add tab definitions to modulesTabs
+		var use_listener; // Use listener or not
+		if (listener)
+			use_listener = true;
 		var tabContentTextView = new sap.m.Text({text:"Starting...", height:'50%'});
 		var panel = new sap.ui.commons.Panel({
-			height: '50%',
+			height: use_listener ? "50%" : "100%",
 			width: '100%',
 			text: 'Log:',
 			content: [tabContentTextView]
 		});
+
 		var tab = new custom.controls.Tab({text: tab_name, height: '100%', useListener: use_listener});
 		tab.addContent(panel);
+		panel.addEventDelegate({
+			onAfterRendering: function() {
+				mainController.panelScrollDown(this);
+			}
+		}, panel);
 		var oTabStripWidget = mainView.byId("Main_LogTabsWidget");
-		modulesTabs[tab_name] = [{text: tabContentTextView, tab: tab, panel:panel}];
+		modulesTabs[tab_name] = {
+				tab: tab, //tab control()
+				module_log: {textView: tabContentTextView, panel:panel},
+				listener: null,
+				isShellConnected: false,
+				isNew: true //True if module is currently added
+		};
 		oTabStripWidget.addItem(tab);
 		oTabStripWidget.setSelectedItem(tab);
 		if(use_listener){
 			var listenerPanel = mainController.createListenerTemplate(tab_name);
 			tab.addContent(listenerPanel.panel);
-			modulesTabs[tab_name].push(listenerPanel);
+			modulesTabs[tab_name]["listener"] = listenerPanel;
 		}
 	},
 
 	searchModules: function(event){
-		var textToSearch = event.getParameters().newValue;		
+		var textToSearch = event.getParameters().newValue;
 		var oModulesTree = mainView.byId("Main_ModulesTree");
 		var binding = oModulesTree.getBinding("nodes");
 		if (!textToSearch){
+			//Remove filter
 			binding.filter([]);
 			return;
 		}
+		//Creating filters by fields
 		var oNameFilter = new sap.ui.model.Filter("NAME", "Contains", textToSearch);
 		var oDescFilter = new sap.ui.model.Filter("DESCRIPTION", "Contains", textToSearch);
 		var oCveFilter = new sap.ui.model.Filter("CVE Name", "Contains", textToSearch);
 		var oVendorFilter = new sap.ui.model.Filter("VENDOR", "Contains", textToSearch);
 
-		var oFileFilter = new sap.ui.model.Filter("isFile", sap.ui.model.FilterOperator.EQ, true);
-		var orFilter = new sap.ui.model.Filter([oNameFilter, oCveFilter, oDescFilter, oVendorFilter]);
-		binding.filter([orFilter, oFileFilter]);
+		var oFileFilter = new sap.ui.model.Filter("isFile", sap.ui.model.FilterOperator.EQ, true);//Check if node is file or directory
+		var orFilter = new sap.ui.model.Filter([oNameFilter, oCveFilter, oDescFilter, oVendorFilter]);//apply OR operation for filters
+		binding.filter([orFilter, oFileFilter]);//apply AND operation for filters
 		if(textToSearch)
 			oModulesTree.expandAll();
 	},
     
     setConnectionState: function(state){
+		///Changes ConnectButton state
         var connectButton = mainView.byId("Main_ReconnectButton");
         if (state){
             connectButton.setType(sap.m.ButtonType.Accept);
@@ -155,17 +193,28 @@ sap.ui.controller("mvc.Main", {
     },
 
 	sendListenerCommand: function(event){
-		var command = event.getParameters().newValue;
+		var command = this.getValue();
 		this.setValue("");
 		var module_name = this.data('module_name');
-		guiCommandsHandler.sendListenerCommand(module_name, command, window.doSend);
+		var isDublicated = listenerCommands.any({text: command});
+		if (!isDublicated) {
+			listenerCommands.push({text: command});
+		}
+		var oModel = new sap.ui.model.json.JSONModel();
+		oModel.setData(listenerCommands);
+		this.setModel(oModel);
+		guiCommandsHandler.sendListenerCommand(module_name, command, function(evt) {
+			//Response
+			var message = evt.args["message"];
+			if (message === "")
+				return;
+			var listenerCommandView = mainView.byId("Main_ListenerCommandView");
+			listenerCommandView.setValue(listenerCommandView.getValue() + "\n" + message);
+		});
 	},
 
 	startListener: function (event) {
-		var listenerButton = mainView.byId("Main_ListenerButton");
-		guiCommandsHandler.startListener(window.doSend);
-		listenerButton.setText("Stop listener");
-		listenerButton.setType(sap.m.ButtonType.Accept);
+		guiCommandsHandler.startListener();
 	},
 
 	createListenerTemplate: function(module_name){
@@ -184,24 +233,30 @@ sap.ui.controller("mvc.Main", {
 		});
 		listenerCommandView.addStyleClass("moduleInfoTextView");
 
-		var listenerCommandField = new sap.ui.commons.TextField({
+		listenerCommandView.addEventDelegate({
+			onAfterRendering: function () {
+				mainController.elementScrollDown(this);
+			}
+		}, listenerCommandView);
+		var listenerCommandField = new sap.ui.commons.ComboBox({
 			height: "10%",
 			width: "100%",
 			placeholder:"Enter commands here...",
-			change: [mainController.sendListenerCommand, listenerCommandField]
+			items: {
+				path: "/",
+				template: new sap.ui.core.ListItem({text: "{text}"})
+			}
 		});
+		listenerCommandField.addEventDelegate({
+			onsapenter: mainController.sendListenerCommand
+		}, listenerCommandField);
 		listenerCommandField.data('module_name', module_name);
 		listenerPanel.addContent(listenerCommandView);
 		listenerPanel.addContent(listenerCommandField);
 		return {panel: listenerPanel, textView: listenerCommandView, textField: listenerCommandField};
 	},
 
-	scrollToBottom: function(event){
-		arguments = $(this);
-		alert(1);
-	},
-
-	onTreeNodeDblClick: function(oEvent){
+	runModule: function(oEvent){
 		if (oEvent.type == 'dblclick' && !this.getSelectable())
 			return;
 		var nodes = mainController.getSelectedNodes('You should select module to run');
@@ -209,14 +264,45 @@ sap.ui.controller("mvc.Main", {
 			return;
 		var dialog = runDialogView.byId("RunDialog_Dialog");
 		dialog.setTitle(nodes[0].getText());
-		guiCommandsHandler.showOptions(nodes[0].getText(), doSend);
+		guiCommandsHandler.showOptions(nodes[0].getText(), function(evt) {
+			var args = evt.args;
+			var target = mainView.byId("Main_Target").getValue().split(':');
+			var host = target[0];
+			var port = target[1];
+			//change host and port if available
+			for (var index in args) {
+				if (!args.hasOwnProperty(index))
+					continue;
+				var entry = args[index];
+				if (entry == null)
+					continue;
+				if (entry["option"].toLowerCase() === "host" && host)
+					entry.value.value = host;
+				if (entry["option"].toLowerCase() === "port" && port)
+					entry.value.value = port;
+			}
+			oOptionsModel = new sap.ui.model.json.JSONModel();
+			oOptionsModel.setData(args);
+			dialog.setModel(oOptionsModel);
+			dialog.open();
+		});
 	},
 
 	openEditor: function(event) {
 		var nodes = mainController.getSelectedNodes('You should select module to edit');
 		if(nodes.length <= 0)
 			return;
-		guiCommandsHandler.getSource(nodes[0].getText());
+		guiCommandsHandler.getSource(nodes[0].getText(), function(evt) {
+			var args = evt.args;
+			var oData = args;
+			var model = new sap.ui.model.json.JSONModel();
+			model.setData(oData);
+			var dialog = codeEditorDialogView.byId('CodeEditor_Dialog');
+			dialog.setModel(model);
+			dialog.setTitle(args['module_name']);
+			dialog.open();
+			codeEditorDialogController.loadEditor();
+		});
 	},
 
 	getSelectedNodes: function(warnMessage) {
@@ -248,6 +334,103 @@ sap.ui.controller("mvc.Main", {
         var oTabStripWidget = mainView.byId("Main_LogTabsWidget");
         var key = oTabStripWidget.getSelectedKey();
         return key;
-    }
+    },
+
+	getActiveTabName: function() {
+		var oTabStripWidget = mainView.byId("Main_LogTabsWidget");
+		var key = mainController.getActiveTabKey();
+		var name = sap.ui.getCore().byId(key).getText();
+		return name;
+	},
+
+	addModuleTab: function(evt) {
+		var args = evt.args;
+		if (args && args['module_name'])
+			mainController.addTab(args['module_name'], args['listener']);
+	},
+
+	getModulesLog: function() {
+		guiCommandsHandler.getModulesLog(function(evt) {
+			var modules = evt.args;
+			mainController.restoreTabs(modules);
+			if (!Object.keys(modulesTabs).length) {
+				document.title = "EaST UI";
+				return;
+			}
+			Object.keys(modules, function(moduleName, module) {
+				var state = module.state;
+				var messages = module.message;
+				var isThereNewMessages = module.new_messages;
+				var currentTab = modulesTabs[moduleName].tab;
+				var logTextView = modulesTabs[moduleName].module_log.textView;
+				if (isThereNewMessages || modulesTabs[moduleName].isNew){
+					logTextView.setText(messages);
+					//scroll down when after adding new message
+					mainController.panelScrollDown(modulesTabs[moduleName].module_log.panel);
+				}
+				var isCurrentTabActive = mainController.getActiveTabName() === moduleName;
+				var title;
+				if (state == null) {
+					title = "In progress...";
+				}
+				else {
+					if (state) {
+						title = "Success";
+					} else {
+						title = "Failed";
+					}
+					currentTab.setState(state);
+				}
+				if(isCurrentTabActive){
+					document.title = title;
+					if(state == null)
+						logTextView.setText(messages + "\n" + mainController.getWaitingSymbol());
+				}
+				var listener = module.listener;
+				if (listener) {
+					var listenerMessages = listener.message;
+					var isShellConnected = listener.connected;
+					var isThereNewListenerMessages = listener.new_messages;
+					modulesTabs[moduleName].listener.panel.setText(listenerTitle);
+
+					if (isShellConnected) {
+						var listenerTitle = "Listener was connected to shell:";
+						if (!modulesTabs[moduleName].isShellConnected) {
+							showMessageBox("Shell connected to " + moduleName + " listener");
+							modulesTabs[moduleName].isShellConnected = 1;
+						}
+						if (isShellConnected === 2) {
+							var listenerTitle = "Listener was disconnected from shell...";
+							modulesTabs[moduleName].listener.textField.setEnabled(false);
+						} else if (isShellConnected === 1) {
+							modulesTabs[moduleName].isShellConnected = isShellConnected;
+						}
+						currentTab.setListenerState(isShellConnected);
+					}
+					if (isThereNewListenerMessages || modulesTabs[moduleName].isNew) {
+						modulesTabs[moduleName].listener.textView.setValue(listenerMessages);
+						mainController.elementScrollDown(modulesTabs[moduleName].listener.textView);
+					}
+				}
+				modulesTabs[moduleName].isNew = false;
+			})
+		});
+	},
+
+	panelScrollDown: function(panel) {
+		panel.setScrollTop(999999);
+	},
+
+	elementScrollDown: function(element) {
+		element.$().scrollTop(999999);
+	},
+
+	restoreTabs: function(modules) {
+		Object.keys(modules, function (moduleName, module) {
+			if(!Object.has(modulesTabs, moduleName)) {
+				mainController.addTab(moduleName, module["listener"]);
+			}
+		})
+	}
 
 });

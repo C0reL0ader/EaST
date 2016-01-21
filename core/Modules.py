@@ -75,6 +75,22 @@ class ModulesHandler:
             self.processes[module_name].new_messages = False
         return log
 
+    def get_module_log(self, module_name):
+        if module_name not in self.processes:
+            return None
+        module = self.processes[module_name]
+        message_elements = module.log
+        temp_messages = []
+        for element in message_elements:
+            temp_messages.append("%s: %s" % (element.time, element.message))
+        log = dict(
+                state=self.processes[module_name].state,
+                message="\n".join(temp_messages),
+                new_messages=self.processes[module_name].new_messages
+        )
+        self.processes[module_name].new_messages = False
+        return log
+
     def kill_process(self, module_name, remove=False):
         """	Kill process and remove it from list of running modules
         :param pid: PID of running process

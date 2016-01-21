@@ -19,7 +19,7 @@ class Commands:
     def __init__(self, server):
         self.commands = {"exploit": self.start_module,
                          "message": self.register_module_message,
-                         "status": self.module_status,
+                         "modules_log": self.get_modules_log,
                          "kill_process": self.kill_process,
                          "options": self.get_module_options,
                          "get_args_for_module": self.get_module_args,
@@ -110,7 +110,7 @@ class Commands:
         self.register_module_message(log_args, request)
 
         # Send command to GUI to start logging
-        self.send_all(log_args, request, "start_log")
+        self.send_all(log_args, request, "start_module")
 
     def get_all_server_data(self, args, request):
         """
@@ -138,10 +138,12 @@ class Commands:
         for module_name in log.keys():
             if module_name in listeners_messages.keys():
                 log[module_name]["listener"]=listeners_messages[module_name]
+            else:
+                log[module_name]["listener"] = None
         resp = dict(command="restore_tabs", args=log)
         request.send_message(json.dumps(resp))
 
-    def module_status(self, args, request):
+    def get_modules_log(self, args, request):
         """Get last log message of module
         :param args: (dict):
                     key "module_name":(string) Name of module;
@@ -152,7 +154,7 @@ class Commands:
         for module_name in modules.keys():
             if module_name in listeners_messages.keys():
                 modules[module_name]["listener"] = listeners_messages[module_name]
-        resp = dict(command="status", args=modules)
+        resp = dict(command="modules_log", args=modules)
         request.send_message(json.dumps(resp))
         return
 

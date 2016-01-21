@@ -1,31 +1,28 @@
-function bind(func, context) {
-  return function() {
-    return func.apply(context, arguments);
-  };
-}
-
 var GuiCommandsHandler = function() {
 };
 
 GuiCommandsHandler.prototype = {
-    startListener: function(send) {
-        send({"command": "run_listener", "args": ""})
+    startListener: function() {
+        doSend({"command": "run_listener", "args": ""})
     },
     
-    showOptions: function(module_name, send) {
-        send({ "command": "options", "args": { "module_name": module_name }});
+    showOptions: function(module_name, callback) {
+        guiCommandsHandler.bindEvent("on_show_options", callback);
+        doSend({ "command": "options", "args": { "module_name": module_name }});
     },
     
-    getAllData: function(send){
-        send({ "command": "get_all_server_data", "args": ""});
+    getAllData: function(callback){
+        guiCommandsHandler.bindEvent("on_get_all_data", callback);
+        doSend({ "command": "get_all_server_data", "args": ""});
     },
 
-    restoreTabs: function(send){
-        send({ "command": "restore_tabs", "args": ""});
+    restoreTabs: function(){
+        doSend({ "command": "restore_tabs", "args": ""});
     },
 
-    sendListenerCommand: function(module_name, message, send){
-        send({
+    sendListenerCommand: function(module_name, message, callback){
+        guiCommandsHandler.bindEvent("on_listener_message", callback);
+        doSend({
             "command": "gui_command_to_listener",
             "args": {
                 "module_name": module_name,
@@ -34,7 +31,8 @@ GuiCommandsHandler.prototype = {
         });
     },
    
-    startModule: function(args){
+    startModule: function(args, callback){
+        guiCommandsHandler.bindEvent("on_module_started", callback);
         doSend({
             "command": "exploit",
             "args": args,
@@ -48,7 +46,8 @@ GuiCommandsHandler.prototype = {
         doSend(req);
     },
 
-    getSource: function(module_name){
+    getSource: function(module_name, callback){
+        guiCommandsHandler.bindEvent("on_get_source", callback);
         req={};
         req["command"] = "get_source";
         req["args"] = {"module_name": module_name};
@@ -60,6 +59,20 @@ GuiCommandsHandler.prototype = {
         req["command"] = "save_source";
         req["args"] = {"module_name": module_name, "message": code};
         doSend(req);
+    },
+
+    getModulesLog: function(callback) {
+        guiCommandsHandler.bindEvent("on_modules_log", callback)
+        req = {
+            "command": "modules_log",
+            "args": ""
+        }
+        doSend(req);
+    },
+
+    bindEvent: function(event_type, callback) {
+        $(document).unbind(event_type);
+        $(document).on(event_type, callback);
     }
 
 };

@@ -10,7 +10,7 @@ sap.ui.controller("mvc.RunDialog", {
             use_listener: isListenerEnabled,
             options: data
         };
-        guiCommandsHandler.startModule(args);
+        guiCommandsHandler.startModule(args, mainController.addModuleTab);
         dialog.close();
     },
 

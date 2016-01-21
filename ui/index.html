@@ -16,14 +16,13 @@
             "mvc": "./mvc/"
          }' >
   </script>
+    <script src="resources/sugar.min.js"></script>
     <script src="guiCommands.js" ></script>
     <script src="serverCommands.js"></script>
     <script src="WebsocketHandler.js"></script>
     <script src="customControls.js"></script>
     <script src="resources/codemirror.js"></script>
     <script src="resources/mode/python/python.js"></script>
-    <script src="lodash.min.js"></script>
-    <script src="resources/sugar.min.js"></script>
     <link rel="stylesheet" href="resources/codemirror.css">
     <style>
         .CodeMirror {
@@ -58,7 +57,7 @@
           left: 5px;
           margin: 0px 5px 0px;
           font-size: 15px;
-          font-weight: 20;
+          font-weight: bold;
         }
         .listenerLabel {
           width: 8px;
@@ -74,7 +73,7 @@
         }
     </style>
   <script>
-      
+
       var mainController = sap.ui.controller("mvc.Main");
       var mainView = sap.ui.view({
           type: sap.ui.core.mvc.ViewType.JS,
@@ -82,7 +81,7 @@
           controller: mainController
       });
       mainView.setHeight("100%");
-      
+
 
       var runDialogController = sap.ui.controller("mvc.RunDialog");
       var runDialogView = sap.ui.view({
@@ -100,27 +99,24 @@
 
       mainView.placeAt("content");
       $( document ).ready(function() {
-          guiCommandsHandler = new GuiCommandsHandler();          
+          guiCommandsHandler = new GuiCommandsHandler();
           serverCommandsHandler = new ServerCommandsHandler();
           websocketHandler = new WebsocketHandler();
-          modulesTabs = [];
+          modulesTabs = {};
       });
+
+      var showMessageBox = function(msg) {
+          sap.m.MessageToast.show(msg, {
+              my: "center center",
+              at: "center center",
+              duration: 1000
+          });
+      }
 
       function doSend(message)
       {
           websocketHandler.doSend(message);
       }
-
-      function bind(func, context) {
-          return function() {
-              return func.apply(context, arguments);
-          };
-      }
-
-
-
-
-
   </script>
 </head>
 <body class="sapUiBody" role="application" style="height: 100vh">
