@@ -9,6 +9,7 @@ import PortScannerMT
 from Modules import ModulesHandler
 from ListenerHandler import ListenerHandler
 from OptionsParser import OptionsParser
+from ReportGenerator import ReportGenerator
 
 EXPLOITS_PATH = "./exploits/"
 LISTENER = "./listener/listener.py"
@@ -29,7 +30,8 @@ class Commands:
                          "listener_get_options": self.get_listener_options,
                          "gui_command_to_listener": self.gui_command_to_listener,
                          "get_source": self.get_source,
-                         "save_source": self.save_source
+                         "save_source": self.save_source,
+                         "generate_report": self.generate_report
                          }
         self.server = server
         self.using_module = ""
@@ -39,6 +41,7 @@ class Commands:
         self.logger = logging.getLogger()
         self.options_parser = OptionsParser()
         self.port_scanner = PortScannerMT.Scanner(4000, 5000)
+        self.report_generator = ReportGenerator()
 
     def get_all_modules_paths(self):
         """Get common modules and modules from packs if available"""
@@ -97,7 +100,7 @@ class Commands:
             self.server.add_process(listener_process)
         process = subprocess.Popen([sys.executable, module_name], shell=False, env=os.environ.copy())
         options = self.options_parser.parse_data(options)
-        self.modules_handler.register_process(new_module_name, process, options)
+        self.modules_handler.register_process(new_module_name, args["module_name"], process, options)
         self.server.add_process(process)
 
         # We need to register first log message of module
@@ -183,6 +186,8 @@ class Commands:
         replace = args.get("replace", False)
         if "message" in args.keys() and "state" in args.keys() and "pid" in args.keys():
             self.modules_handler.add(args["pid"], args["message"], args["state"], inline, replace)
+            if args["state"] is not None:
+                self.generate_report(args["pid"])
 
     def get_module_options(self, args, request):
         """Send options of module to gui
@@ -260,6 +265,25 @@ class Commands:
         f = open(self.available_modules[args['module_name']],'w')
         f.write(code)
         f.close()
+
+    def generate_report(self, pid):
+        module_name = self.modules_handler.get_module_name_by_pid(pid)
+        if not module_name:
+            return
+        module_inst = self.modules_handler.get_module_inst_by_name(module_name)
+        listener_inst = self.listener_handler.get_listener_inst_by_name(module_name)
+        info = self.modules_handler.get_module_info((self.available_modules[module_inst.original_name], module_name))
+        module_temp = {
+            "LOG": module_inst.log,
+            "RESULT": module_inst.state,
+            "IS_SHELL_CONNECTED": listener_inst.isShellConnected if listener_inst else "False",
+            "OPTIONS": module_inst.options,
+            "LISTENER": listener_inst.options if listener_inst else None
+        }
+        module_temp.update(info)
+        module_temp["CVE"] = module_temp["CVE Name"]
+        self.report_generator.append_module(module_temp)
+
 
     def send_all(self, message, request=None, command=""):		
         self.logger.debug(message)

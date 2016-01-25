@@ -124,3 +124,7 @@ class ListenerHandler:
         if module_name:
             self.listeners[module_name].setShellConnected(state)
 
+    def get_listener_inst_by_name(self, module_name):
+        if module_name in self.listeners.keys():
+            return self.listeners[module_name]
+

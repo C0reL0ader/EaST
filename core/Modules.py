@@ -19,6 +19,7 @@ class RunningProcess:
         :param process:(subprocess.Popen) Running process
         """
         self.module_name = module_name
+        self.original_name = ""
         self.process = process
         self.pid = process.pid
         self.options = options
@@ -51,12 +52,13 @@ class ModulesHandler:
             if state is not None:
                 self.processes[module_name].state = state
 
-    def register_process(self, module_name, process, options):
+    def register_process(self, module_name, original_name, process, options):
         """	Register new running module as process
         @param module_name: Module name
         @param process: subprocess.Popen() instance
         """
         new_process = RunningProcess(module_name, process, options)
+        new_process.original_name = original_name
         self.processes[module_name] = new_process
         self.logger.debug("Process with PID =%s and name '%s' was added" % (new_process.pid, new_process.module_name))
 
@@ -133,12 +135,18 @@ class ModulesHandler:
         """
         res = []
         for name in names:
-            module = self.import_from_uri(name[0])
-            if hasattr(module, 'INFO'):
-                module.INFO["NAME"] = name[1]
-                res.append(module.INFO)
+            info = self.get_module_info(name)
+            if info:
+                res.append(info)
         res = make_tree(res)
         return res
+
+    def get_module_info(self, name):
+        module = self.import_from_uri(name[0])
+        if hasattr(module, 'INFO'):
+            module.INFO["NAME"] = name[1]
+            return module.INFO
+        return None
 
     def get_module_options(self, pid):
         module_name = self.get_module_name_by_pid(pid)
@@ -155,6 +163,10 @@ class ModulesHandler:
                 return module.OPTIONS
             else:
                 return {}
+
+    def get_module_inst_by_name(self, module_name):
+        if module_name in self.processes:
+            return self.processes[module_name]
 
     def make_unique_name(self, module_name, suffix=1):
         if module_name not in self.processes.keys():

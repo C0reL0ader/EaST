@@ -196,10 +196,8 @@ sap.ui.controller("mvc.Main", {
 		var command = this.getValue();
 		this.setValue("");
 		var module_name = this.data('module_name');
-		var isDublicated = listenerCommands.any({text: command});
-		if (!isDublicated) {
-			listenerCommands.push({text: command});
-		}
+		listenerCommands.remove({text: command});
+		listenerCommands.insert({text: command}, 1);
 		var oModel = new sap.ui.model.json.JSONModel();
 		oModel.setData(listenerCommands);
 		this.setModel(oModel);
@@ -374,11 +372,7 @@ sap.ui.controller("mvc.Main", {
 					title = "In progress...";
 				}
 				else {
-					if (state) {
-						title = "Success";
-					} else {
-						title = "Failed";
-					}
+					title = state ? "Success" : "Failed";
 					currentTab.setState(state);
 				}
 				if(isCurrentTabActive){
@@ -394,6 +388,7 @@ sap.ui.controller("mvc.Main", {
 					modulesTabs[moduleName].listener.panel.setText(listenerTitle);
 
 					if (isShellConnected) {
+						document.title = isCurrentTabActive ? (document.title + "(shell)") : document.title;
 						var listenerTitle = "Listener was connected to shell:";
 						if (!modulesTabs[moduleName].isShellConnected) {
 							showMessageBox("Shell connected to " + moduleName + " listener");
