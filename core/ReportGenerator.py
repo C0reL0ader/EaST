@@ -9,7 +9,6 @@ class ReportGenerator:
         self.categories = {}
         self.report_name = self.generate_report()
 
-
     def _generate_content(self, module):
         content = self.read_file_content(self.path_to_templates + "row_template.html")
 
@@ -28,16 +27,16 @@ class ReportGenerator:
                 options += "<br>"
 
 
-        content = content.format(MODULE_NAME=module["NAME"],
-                       DESCRIPTION=module["DESCRIPTION"],
-                       NOTES=module["NOTES"],
-                       LOG="<br>".join(m.time + ":" + m.message for m in module["LOG"]),
-                       IS_SHELL_CONNECTED=module["IS_SHELL_CONNECTED"],
-                       CVE=module["CVE"],
+        content = content.format(MODULE_NAME=str(module["NAME"]),
+                       DESCRIPTION=str(module["DESCRIPTION"]),
+                       NOTES=str(module["NOTES"]),
+                       LOG=("<br>".join(m.time + ":" + m.message for m in module["LOG"])).encode('utf-8'),
+                       IS_SHELL_CONNECTED=str(module["IS_SHELL_CONNECTED"]),
+                       CVE=str(module["CVE"]),
                        CLASS="succeeded" if module["RESULT"] else "failed",
                        IS_SUCCESS="Succeeded" if module["RESULT"] else "Failed",
-                       OPTIONS=options,
-                       LISTENER=listener)
+                       OPTIONS=str(options),
+                       LISTENER=str(listener))
 
         if module["RESULT"]:
             self.succeeded_count += 1
@@ -53,7 +52,6 @@ class ReportGenerator:
         self._generate_content(module)
         self._rewrite_report()
 
-
     def generate_report(self):
         path = os.getcwd() + "/Reports"
         if not os.path.exists(path):
@@ -62,7 +60,6 @@ class ReportGenerator:
         with open(name, "w") as f:
             f.write("")
         return name
-
 
     def read_file_content(self, filename):
         content = ""

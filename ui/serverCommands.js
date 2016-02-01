@@ -1,19 +1,21 @@
 function ServerCommandsHandler() {
     this.commands = {"info": this.showModuleInfo,
                      "options": this.showOptions,
-                     "start_module": this.startLog,
+                     "start_module": this.startModule,
                      "restore_tabs": this.restoreTabs,
                      "set_all_data": this.setAllData,
-                     "listener_message": this.onListenerMessage,
+                     "on_listener_message": this.onListenerMessage,
                      "get_source": this.getSource,
-                     "modules_log": this.onModulesLog,
+                     "on_modules_log": this.onModulesLog,
+                     "on_module_message": this.onModuleMessage,
+                     "hello": this.onHello
                     };
     this.statuses = [];
 };
 
 ServerCommandsHandler.prototype = {
 
-    startLog: function(args){
+    startModule: function(args){
         serverCommandsHandler.fireCustomEvent("on_module_started", args);
     },
 
@@ -42,6 +44,14 @@ ServerCommandsHandler.prototype = {
         var command = parsed["command"];
         var args = parsed["args"];
         this.commands[command](args);
+    },
+
+    onModuleMessage: function (args) {
+        serverCommandsHandler.fireCustomEvent("on_module_message", args);
+    },
+
+    onHello: function(args) {
+        //handshake with server
     },
 
     fireCustomEvent: function(event_type, data) {

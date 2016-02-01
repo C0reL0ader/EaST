@@ -8,14 +8,14 @@ import zipfile
 from shutil import rmtree
 import argparse
 import importlib
-from core.WebSocketServer import ThreadedServer, WebSocketsHandler
+from core.WebSocketServer import WebSocketServer
 
 sys.path.append("./core")
 sys.path.append("./core/helpers/java")
 sys.path.append("./core/helpers/archieve")
 sys.path.append("./shellcodes")
 
-VERSION = "0.9.8"
+VERSION = "0.9.9"
 
 class FrameworkStarter:
     def __init__(self, host="localhost", ws_port=49999, port=80):
@@ -26,7 +26,7 @@ class FrameworkStarter:
         self.logger = None
         self.prepare_logging(False)
         self.prepare_environment()
-        self.dependencies = ["six", "websocket"]
+        self.dependencies = ["setuptools", "six", "websocket"]
         self.install_missing_deps()
         self.parse_args()
 
@@ -57,6 +57,12 @@ class FrameworkStarter:
         """
         Check and install missing dependencies
         """
+        # # checking for setup_tools
+        # try:
+        #     imported = importlib.import_module("easy_install")
+        # except ImportError:
+        #     print("Installing setup-tools...")
+        #     self.
         is_there_deps = False
         for module in self.dependencies:
             try:
@@ -99,9 +105,9 @@ class FrameworkStarter:
 
     def start_servers(self):
         print("Starting servers...")
-        ws_server = ThreadedServer((self.host, self.ws_port), WebSocketsHandler)
+        ws_server = WebSocketServer("0.0.0.0", self.ws_port, 1000)
         http_server = BaseHTTPServer.HTTPServer((self.host, self.port), HTTPRequestHandler)
-        th1 = threading.Thread(target=ws_server.serve_forever)
+        th1 = threading.Thread(target=ws_server.run)
         th2 = threading.Thread(target=http_server.serve_forever)
         threads = [th1, th2]
         for t in threads:
@@ -114,8 +120,8 @@ class FrameworkStarter:
                 # Filter out threads which have been joined or are None
                 threads = [t.join(1000) for t in threads if t is not None and t.isAlive()]
             except KeyboardInterrupt:
-                ws_server.shutdown()
                 ws_server.kill_all_processes()
+                ws_server.stop()
                 http_server.shutdown()
                 os._exit(1)
 

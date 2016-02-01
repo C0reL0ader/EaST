@@ -4,7 +4,68 @@ sap.ui.controller("mvc.Main", {
 		waitingSymbols = ["\\", "|", "/", "-"];
 		currentWaitingSymbolIndex = 0;
 		listenerCommands = [{text:""}];
+        bindEvent("on_module_message", mainController.onModuleMessage);
+        bindEvent("on_listener_message", mainController.onListenerMessage);
 	},
+
+    onModuleMessage: function(event) {
+        var args = event.args;
+        var moduleName = args["module_name"];
+        var state = args["state"];
+        var message = args["message"];
+        var currentTab = modulesTabs[moduleName].tab;
+        var logTextView = modulesTabs[moduleName].module_log.textView;
+
+        var previousMessages = logTextView.data("messages") ? (logTextView.data("messages") + "\n" + message) : message;
+        logTextView.data("messages", previousMessages);
+
+
+        //If another client opens a new tab
+		if (!Object.keys(modulesTabs).any(moduleName)) {
+            return;
+        }
+
+        logTextView.setText(logTextView.data("messages"));
+        mainController.panelScrollDown(modulesTabs[moduleName].module_log.panel);
+        if (state != null) {
+            currentTab.setState(state);
+            if(state)
+                messageController.addInfoMessage("Module {name} was succeeded".assign({name: moduleName}));
+            else
+                messageController.addErrorMessage("Module {name} was failed".assign({name: moduleName}));
+        }
+    },
+
+	onListenerMessage: function(event) {
+        var args = event.args;
+        var moduleName = args["module_name"];
+        var message = args["message"];
+        var isShellConnected = args["state"];
+
+        //If another client opens a new tab
+        if (!Object.keys(modulesTabs).any(moduleName)) {
+            return;
+        }
+        var listenerTextView = modulesTabs[moduleName].listener.textView;
+        var listenerCommandsField = modulesTabs[moduleName].listener.textField;
+        if (message)
+            listenerTextView.setValue(listenerTextView.getValue() + "\n" + message);
+        mainController.elementScrollDown(listenerTextView);
+        var currentTab = modulesTabs[moduleName].tab;
+        currentTab.setListenerState(isShellConnected);
+        if (isShellConnected) {
+            if (!modulesTabs[moduleName].isShellConnected) {
+                modulesTabs[moduleName].listener.panel.setText("Shell is connected to listener");
+                messageController.addInfoMessage("Shell connected to " + moduleName + " listener");
+            }
+            if (isShellConnected === 2) {
+                messageController.addErrorMessage("Shell was disconnected from " + moduleName);
+                listenerCommandsField.setEnabled(false);
+                modulesTabs[moduleName].listener.panel.setText("Shell is disconnected from listener");
+            }
+            modulesTabs[moduleName].isShellConnected = true;
+        }
+    },
 
 	getWaitingSymbol: function() {
 		if(currentWaitingSymbolIndex === waitingSymbols.length - 1){
@@ -19,7 +80,8 @@ sap.ui.controller("mvc.Main", {
 		///Fires when tab close button clicked
 		var tabName = oEvent.getParameter("name");
 		guiCommandsHandler.killProcess(tabName); //Request to kill process on server side
-		modulesTabs[tabName].tab.destroy();//Destroy tab and its children
+		modulesTabs[tabName].tab.destroyContent();//Destroy all tab content
+		modulesTabs[tabName].tab.destroy();//Destroy all tab content
 		delete modulesTabs[tabName]; //Remove tab object from modulesTabs
 	},
 
@@ -144,8 +206,7 @@ sap.ui.controller("mvc.Main", {
 				tab: tab, //tab control()
 				module_log: {textView: tabContentTextView, panel:panel},
 				listener: null,
-				isShellConnected: false,
-				isNew: true //True if module is currently added
+                isShellConnected: false
 		};
 		oTabStripWidget.addItem(tab);
 		oTabStripWidget.setSelectedItem(tab);
@@ -195,24 +256,18 @@ sap.ui.controller("mvc.Main", {
 	sendListenerCommand: function(event){
 		var command = this.getValue();
 		this.setValue("");
-		var module_name = this.data('module_name');
+		var moduleName = this.data('module_name');
+        var listenerView = modulesTabs[moduleName].listener.textView;
+
+        listenerView.setValue(listenerView.getValue() + "\n\n>> " + command);
+        mainController.elementScrollDown(listenerView);
+
 		listenerCommands.remove({text: command});
 		listenerCommands.insert({text: command}, 1);
 		var oModel = new sap.ui.model.json.JSONModel();
 		oModel.setData(listenerCommands);
 		this.setModel(oModel);
-		guiCommandsHandler.sendListenerCommand(module_name, command, function(evt) {
-			//Response
-			var message = evt.args["message"];
-			if (message === "")
-				return;
-			var listenerCommandView = mainView.byId("Main_ListenerCommandView");
-			listenerCommandView.setValue(listenerCommandView.getValue() + "\n" + message);
-		});
-	},
-
-	startListener: function (event) {
-		guiCommandsHandler.startListener();
+		guiCommandsHandler.sendListenerCommand(moduleName, command);
 	},
 
 	createListenerTemplate: function(module_name){
@@ -330,6 +385,9 @@ sap.ui.controller("mvc.Main", {
 
 	getActiveTabKey: function(node) {
         var oTabStripWidget = mainView.byId("Main_LogTabsWidget");
+        if (oTabStripWidget.getItems().length === 0) {
+            return null;
+        }
         var key = oTabStripWidget.getSelectedKey();
         return key;
     },
@@ -337,6 +395,8 @@ sap.ui.controller("mvc.Main", {
 	getActiveTabName: function() {
 		var oTabStripWidget = mainView.byId("Main_LogTabsWidget");
 		var key = mainController.getActiveTabKey();
+        if (!key)
+            return null;
 		var name = sap.ui.getCore().byId(key).getText();
 		return name;
 	},
@@ -347,67 +407,56 @@ sap.ui.controller("mvc.Main", {
 			mainController.addTab(args['module_name'], args['listener']);
 	},
 
+    refresh: function(evt) {
+        var moduleName = mainController.getActiveTabName();
+        if (!moduleName){
+            document.title = "EaST UI";
+            return;
+        }
+        var tab = modulesTabs[moduleName].tab;
+        var logView = modulesTabs[moduleName].module_log.textView;
+
+        var docTitle = "In progress...";
+        var state = tab.getState();
+        if (state != null) {
+            docTitle = state ? "Success" : "Failed";
+        }
+        logView.data("messages", logView.data("messages") || ""); //for empty data "messages"
+        if (state == null){
+            logView.setText((logView.data("messages") || "") + "\n" + mainController.getWaitingSymbol());
+        }
+        var listenerState = tab.getListenerState();
+        if (listenerState)
+            docTitle += "(with shell)";
+        document.title = docTitle;
+    },
+
 	getModulesLog: function() {
 		guiCommandsHandler.getModulesLog(function(evt) {
 			var modules = evt.args;
 			mainController.restoreTabs(modules);
-			if (!Object.keys(modulesTabs).length) {
-				document.title = "EaST UI";
-				return;
-			}
 			Object.keys(modules, function(moduleName, module) {
 				var state = module.state;
 				var messages = module.message;
-				var isThereNewMessages = module.new_messages;
 				var currentTab = modulesTabs[moduleName].tab;
 				var logTextView = modulesTabs[moduleName].module_log.textView;
-				if (isThereNewMessages || modulesTabs[moduleName].isNew){
-					logTextView.setText(messages);
-					//scroll down when after adding new message
-					mainController.panelScrollDown(modulesTabs[moduleName].module_log.panel);
-				}
-				var isCurrentTabActive = mainController.getActiveTabName() === moduleName;
-				var title;
-				if (state == null) {
-					title = "In progress...";
-				}
-				else {
-					title = state ? "Success" : "Failed";
-					currentTab.setState(state);
-				}
-				if(isCurrentTabActive){
-					document.title = title;
-					if(state == null)
-						logTextView.setText(messages + "\n" + mainController.getWaitingSymbol());
-				}
+                logTextView.setText(messages);
+                logTextView.data("messages", messages);
+                //scroll down when after adding new message
+                mainController.panelScrollDown(modulesTabs[moduleName].module_log.panel);
+                if (state!=null)
+                    currentTab.setState(state);
 				var listener = module.listener;
 				if (listener) {
 					var listenerMessages = listener.message;
 					var isShellConnected = listener.connected;
-					var isThereNewListenerMessages = listener.new_messages;
-					modulesTabs[moduleName].listener.panel.setText(listenerTitle);
-
-					if (isShellConnected) {
-						document.title = isCurrentTabActive ? (document.title + "(shell)") : document.title;
-						var listenerTitle = "Listener was connected to shell:";
-						if (!modulesTabs[moduleName].isShellConnected) {
-							showMessageBox("Shell connected to " + moduleName + " listener");
-							modulesTabs[moduleName].isShellConnected = 1;
-						}
-						if (isShellConnected === 2) {
-							var listenerTitle = "Listener was disconnected from shell...";
-							modulesTabs[moduleName].listener.textField.setEnabled(false);
-						} else if (isShellConnected === 1) {
-							modulesTabs[moduleName].isShellConnected = isShellConnected;
-						}
-						currentTab.setListenerState(isShellConnected);
-					}
-					if (isThereNewListenerMessages || modulesTabs[moduleName].isNew) {
-						modulesTabs[moduleName].listener.textView.setValue(listenerMessages);
-						mainController.elementScrollDown(modulesTabs[moduleName].listener.textView);
-					}
+                    if (isShellConnected === 2) {
+                        modulesTabs[moduleName].listener.textField.setEnabled(false);
+                    }
+                    currentTab.setListenerState(isShellConnected);
+                    modulesTabs[moduleName].listener.textView.setValue(listenerMessages);
+                    mainController.elementScrollDown(modulesTabs[moduleName].listener.textView);
 				}
-				modulesTabs[moduleName].isNew = false;
 			})
 		});
 	},

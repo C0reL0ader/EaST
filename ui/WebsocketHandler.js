@@ -10,17 +10,18 @@ var WebsocketHandler= function() {
 WebsocketHandler.prototype = {
     initData: function (evt) {
         // Gets modules names, version, etc
+        guiCommandsHandler.hello();
         guiCommandsHandler.getAllData(function(evt) {
             var oData = evt.args;
             this.oModulesInfoModel = new sap.ui.model.json.JSONModel();
             this.oModulesInfoModel.setData(oData);
             mainView.setModel(this.oModulesInfoModel);
+            mainController.getModulesLog();
         });
         mainController.setConnectionState(true);
         showMessageBox("Connected to "+this.websocket.url);
-        if (!window.statusTimer) {
-            //Check for log and listener messages every 300ms
-            statusTimer = setInterval(mainController.getModulesLog, 300);
+        if (!window.refreshTimer) {
+            refreshTimer = setInterval(mainController.refresh, 300);
         }
     },
 
@@ -45,6 +46,7 @@ WebsocketHandler.prototype = {
     onError: function(evt) {
         showMessageBox('Disconnected from server');
         websocketHandler.websocket.close();
+        clearInterval(refreshTimer);
     },
 
     doSend: function(message) {
@@ -53,7 +55,7 @@ WebsocketHandler.prototype = {
 
     reconnect: function(){
         websocketHandler.websocket = new WebSocket(this.connectionString);
-        websocketHandler.websocket.onopen = bind(this.onOpen, this);
+        websocketHandler.websocket.onopen = this.onOpen;
         websocketHandler.websocket.onclose = this.onClose;
         websocketHandler.websocket.onmessage = this.onMessage;
         websocketHandler.websocket.onerror = this.onError;

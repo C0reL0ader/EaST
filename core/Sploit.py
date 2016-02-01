@@ -4,6 +4,7 @@ import os
 import sys
 import json
 import logging
+import socket
 
 sys.path.append("./../core")
 
@@ -39,21 +40,19 @@ class Sploit:
         # PID of running module
         self.pid = os.getpid()
         self.logger = logging.getLogger()
-        self.connection = create_connection("ws://%s:%s" % (HOST, PORT), timeout=None, fire_cont_frame=True)
+        self.connection = create_connection("ws://%s:%s" % (HOST, PORT),
+                                            sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),))
+        self.hello()
         self.run = _deco(self, self.run)
         return
-
-
 
     def args(self, options={}):
         """
             This function get required options from server.
         """
-        connection = create_connection("ws://%s:%s" % (HOST, PORT))
         req = dict(command="get_args_for_module", args=dict(pid=self.pid))
-        connection.send(json.dumps(req))
-        resp = connection.recv()
-        connection.close()
+        self.connection.send(json.dumps(req))
+        resp = self.connection.recv()
         return json.loads(resp)
 
     def get_listener_options(self):
@@ -96,9 +95,9 @@ class Sploit:
             msg = "Module %s was succeeded" % self.name
         else:
             msg = "Module %s was failed" % self.name
+        time.sleep(0.1)
         self.send_message(msg, is_successful)
         sys.exit()
-        return
 
 
     def writefile(self, filedata, filename=""):
@@ -143,6 +142,11 @@ class Sploit:
         self.connection.send(json.dumps(req))
         if is_successful is not None:
             self.connection.close()
+
+    def hello(self):
+        args = dict(hello=dict(name=self.pid.__str__(), type="module"))
+        self.connection.send(json.dumps(args))
+        resp = self.connection.recv()
 
 if __name__ == "__main__":
     s = Sploit()

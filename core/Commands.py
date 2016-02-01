@@ -1,4 +1,4 @@
-﻿import os
+import os
 import subprocess
 import sys
 import json
@@ -20,11 +20,10 @@ class Commands:
     def __init__(self, server):
         self.commands = {"exploit": self.start_module,
                          "message": self.register_module_message,
-                         "modules_log": self.get_modules_log,
+                         "on_modules_log": self.get_modules_log,
                          "kill_process": self.kill_process,
                          "options": self.get_module_options,
                          "get_args_for_module": self.get_module_args,
-                         "restore_tabs": self.restore_tabs,
                          "get_all_server_data": self.get_all_server_data,
                          "listener_message": self.on_listener_message,
                          "listener_get_options": self.get_listener_options,
@@ -59,25 +58,22 @@ class Commands:
                     exploits.update(Modules.get_modules_names_dict(full_path_to_pack_exploits))
         return exploits
 
-    def execute(self, message, request):
+    def execute(self, message, client_name):
         """
         Execution of command from websocket-client
         @param (JSON)message:  Object, containing keys "command" and "args"
         @param request: Websocket client request. Used to send response from server to this client
         """
-        if message == "":
-            return
-        data = parse_json(message)
-        if not data or type(data) is not dict or "command" not in data.keys() or "args" not in data.keys():
+        if not message or type(message) is not dict or "command" not in message.keys() or "args" not in message.keys():
             resp = dict(command="message", args="This is not command")
-            request.send_message(json.dumps(resp))
+            self.send_message_to_client(client_name, json.dumps(resp))
             return
-        command = data["command"]
-        args = data["args"]
+        command = message["command"]
+        args = message["args"]
         if command in self.commands.keys():
-            self.commands[command](args, request)
+            self.commands[command](args, client_name)
 
-    def start_module(self, args, request):
+    def start_module(self, args, client_name):
         """Run a module
         @param (dict)args: key 'module_name' => (string) Name of module
                            key 'listener' => (bool) Use listener
@@ -89,12 +85,17 @@ class Commands:
         use_listener = args["use_listener"]
         options = args["options"]
         new_module_name = self.modules_handler.make_unique_name(args["module_name"])
+
+        # After getting unique module name send it to gui
+        data = dict(command="start_module",
+                    args=dict(module_name=new_module_name, listener=use_listener))
+        self.send_message_to_ui(json.dumps(data))
+
         if use_listener:
-            free_socket_data = self.port_scanner.scan(search_for='closed', first_match=True, nthreads=10)
+            exclude_ports = self.listener_handler.get_busy_ports_list()
+            free_socket_data = self.port_scanner.scan(search_for='closed', first_match=True, nthreads=10, exclude=exclude_ports)
             if free_socket_data:
                 listener_options = dict(PORT=free_socket_data[0][1])
-                print listener_options
-
             listener_process = subprocess.Popen([sys.executable, LISTENER], shell=False, env=os.environ.copy())
             self.listener_handler.addListener(new_module_name, listener_process, listener_options)
             self.server.add_process(listener_process)
@@ -110,12 +111,9 @@ class Commands:
                     "listener": use_listener,
                     "state": None
                     }
-        self.register_module_message(log_args, request)
+        self.register_module_message(log_args, client_name)
 
-        # Send command to GUI to start logging
-        self.send_all(log_args, request, "start_module")
-
-    def get_all_server_data(self, args, request):
+    def get_all_server_data(self, args, client_name):
         """
         Send server data to gui(version, available modules)
         """
@@ -123,7 +121,7 @@ class Commands:
         for name in self.available_modules.keys():
             data.append([self.available_modules[name], name])
         available_modules = self.modules_handler.get_modules_info(data)
-        
+
         # Get framework version
         module = self.modules_handler.import_from_uri("start.py")
         version = "?"
@@ -131,22 +129,9 @@ class Commands:
             version = module.VERSION
         args = dict(modules=available_modules, version=version)
         resp = dict(command="set_all_data", args=args)
-        request.send_message(json.dumps(resp))        
+        self.send_message_to_client(client_name, json.dumps(resp))
 
-    def restore_tabs(self, args, request):
-        """ Send data of working modules to restore tabs in gui
-        """
-        log = self.modules_handler.get_full_log()
-        listeners_messages = self.listener_handler.getListenersMessages()
-        for module_name in log.keys():
-            if module_name in listeners_messages.keys():
-                log[module_name]["listener"]=listeners_messages[module_name]
-            else:
-                log[module_name]["listener"] = None
-        resp = dict(command="restore_tabs", args=log)
-        request.send_message(json.dumps(resp))
-
-    def get_modules_log(self, args, request):
+    def get_modules_log(self, args, client_name):
         """Get last log message of module
         :param args: (dict):
                     key "module_name":(string) Name of module;
@@ -157,9 +142,8 @@ class Commands:
         for module_name in modules.keys():
             if module_name in listeners_messages.keys():
                 modules[module_name]["listener"] = listeners_messages[module_name]
-        resp = dict(command="modules_log", args=modules)
-        request.send_message(json.dumps(resp))
-        return
+        resp = dict(command="on_modules_log", args=modules)
+        self.send_message_to_client(client_name, json.dumps(resp))
 
     def kill_process(self, args, request):
         """Kills running process
@@ -174,7 +158,7 @@ class Commands:
         self.modules_handler.kill_process(module_name, remove)
         self.listener_handler.killListener(module_name)
 
-    def register_module_message(self, args, request):
+    def register_module_message(self, args, client_name):
         """Add log message from module
         @param (dict)args: (string)'message'=>Message from module;
                            (bool)'state'=>State of module(success, fail or nothing);
@@ -185,11 +169,19 @@ class Commands:
         inline = args.get("inline", False)
         replace = args.get("replace", False)
         if "message" in args.keys() and "state" in args.keys() and "pid" in args.keys():
-            self.modules_handler.add(args["pid"], args["message"], args["state"], inline, replace)
+            module = self.modules_handler.add(args["pid"], args["message"], args["state"], inline, replace)
+            message = {"command": "on_module_message",
+                       "args": {
+                           "module_name": module.module_name,
+                           "message": module.log[-1].formatted(),
+                           "state": args["state"]
+                       }}
             if args["state"] is not None:
                 self.generate_report(args["pid"])
 
-    def get_module_options(self, args, request):
+            self.send_message_to_ui(json.dumps(message))
+
+    def get_module_options(self, args, client_name):
         """Send options of module to gui
         @param (dict)args: (string)'module_name'=>Name of module
         """
@@ -199,11 +191,10 @@ class Commands:
         json_resp = []
         for key in opts.keys():
             json_resp.append(dict(option=key, value=opts[key]))
-        self.send_all(json_resp, request, "options")
+        self.send_all(json_resp, client_name, "options")
 
 
-
-    def get_module_args(self, args, request):
+    def get_module_args(self, args, client_name):
         """
         Send modules options to running module
         """
@@ -211,42 +202,42 @@ class Commands:
         module_name = self.modules_handler.get_module_name_by_pid(args["pid"])
         listener_options = self.listener_handler.getListenerOptionsByName(module_name)
         resp["listener"] = listener_options
-        request.send_message(json.dumps(resp))
+        self.send_message_to_client(client_name, json.dumps(resp))
 
-    def on_listener_message(self, args, request):
-        """
-        Add message from listener to gui or get last command from gui to listener
-        """
-        pid = args['pid']
-        message = args['message']
-        action = args['action']
-        state = args['state']
-        if action == 'get':
-            message = self.listener_handler.getMessageFromGui(pid)
-            request.send_message(json.dumps(dict(message=message)))
-            return
-        if action == 'add':
-            self.listener_handler.addMessageToGui(pid, message)
-        if state is not None:
-            self.listener_handler.setShellConnected(pid, state)
-
-    def get_listener_options(self, args, request):
-        """
-        Send options sets by gui to listener
-        """
-        pid = args['pid']
-        options = self.listener_handler.getListenerOptions(pid)
-        request.send_message(json.dumps(options))
-
-    def gui_command_to_listener(self, args, request):
+    def gui_command_to_listener(self, args, client_name):
         """
         Add gui command to listener to queue
         """
         module_name = args['module_name']
         message = args['message']
-        self.listener_handler.addMessageFromGui(module_name, message)
+        self.listener_handler.addMessage(module_name, ">> "+message)
+        pid = self.listener_handler.getPidByModuleName(module_name)
+        self.send_message_to_client(pid.__str__(), json.dumps(args))
 
-    def get_source(self, args, request):
+    def on_listener_message(self, args, client_name):
+        """
+        Add message from listener to gui or get last command from gui to listener
+        """
+        pid = args['pid']
+        message = args['message']
+        state = args['state']
+
+        module_name = self.listener_handler.getModuleNameByPid(pid)
+        self.listener_handler.addMessage(module_name, message)
+        data = dict(command="on_listener_message", args=dict(module_name=module_name, state=state, message=message))
+        self.send_message_to_ui(json.dumps(data))
+        if state is not None:
+            self.listener_handler.setShellConnected(pid, state)
+
+    def get_listener_options(self, args, client_name):
+        """
+        Send options sets by gui to listener
+        """
+        pid = args['pid']
+        options = self.listener_handler.getListenerOptions(pid)
+        self.send_message_to_client(client_name, json.dumps(options))
+
+    def get_source(self, args, client_name):
         """
         Get source code of module
         """
@@ -255,7 +246,7 @@ class Commands:
             lines = file.read().splitlines()
             source = "\n".join(lines)
         resp = dict(command="get_source", args=dict(message=source, module_name=module_name))
-        request.send_message(json.dumps(resp))
+        self.send_message_to_client(client_name, json.dumps(resp))
 
     def save_source(self, args, request):
         """
@@ -273,34 +264,41 @@ class Commands:
         module_inst = self.modules_handler.get_module_inst_by_name(module_name)
         listener_inst = self.listener_handler.get_listener_inst_by_name(module_name)
         info = self.modules_handler.get_module_info((self.available_modules[module_inst.original_name], module_name))
-        module_temp = {
+        module_vars = {
             "LOG": module_inst.log,
             "RESULT": module_inst.state,
-            "IS_SHELL_CONNECTED": listener_inst.isShellConnected if listener_inst else "False",
-            "OPTIONS": module_inst.options,
-            "LISTENER": listener_inst.options if listener_inst else None
+            "OPTIONS": module_inst.options
         }
-        module_temp.update(info)
-        module_temp["CVE"] = module_temp["CVE Name"]
-        self.report_generator.append_module(module_temp)
+        listener_vars = {
+            "IS_SHELL_CONNECTED": 0,
+            "LISTENER_OPTIONS": 0,
+            "LISTENER_LOG": 0
+        }
+        if listener_inst:
+            listener_vars = {
+                "IS_SHELL_CONNECTED": listener_inst.isShellConnected,
+                "LISTENER_OPTIONS": listener_inst.options,
+                "LISTENER_LOG": listener_inst.getMessagesFormatted()
+            }
+        module_vars.update(info)
+        module_vars.update(listener_vars)
+        module_vars["CVE"] = module_vars["CVE Name"]
+        self.report_generator.append_module(module_vars)
 
 
-    def send_all(self, message, request=None, command=""):		
+    def send_all(self, message, client_name=None, command=""):
         self.logger.debug(message)
-        if request:
+        if client_name:
             resp = {}
             if command:
                 resp["command"] = command
             else:
                 resp["command"] = "message"
             resp["args"] = message
-            request.send_message(json.dumps(resp))
+            self.send_message_to_client(client_name, json.dumps(resp))
 
+    def send_message_to_client(self, name, message):
+        self.server.send_message(name, message)
 
-def parse_json(message):
-    try:
-        data = json.loads(message)
-    except Exception:
-        logging.getLogger().warn(str(Exception))
-        return None
-    return data
+    def send_message_to_ui(self, message):
+        self.server.send_message_to_ui(message)

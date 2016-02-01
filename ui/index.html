@@ -21,6 +21,7 @@
     <script src="serverCommands.js"></script>
     <script src="WebsocketHandler.js"></script>
     <script src="customControls.js"></script>
+    <script src="messagesController.js"></script>
     <script src="resources/codemirror.js"></script>
     <script src="resources/mode/python/python.js"></script>
     <link rel="stylesheet" href="resources/codemirror.css">
@@ -44,6 +45,15 @@
           background-color: #363E43;
           color: white !important;
           text-shadow: none;
+        }
+        .msgItem {
+            font-size: medium;
+            width: auto;
+            opacity: 0.7;
+            padding: 10px;
+            border: 1px solid black;
+            min-width: 300px;
+            border-radius: 5px;
         }
 
         .tabFilterCloseBtn{
@@ -104,6 +114,7 @@
           websocketHandler = new WebsocketHandler();
           modulesTabs = {};
       });
+      messageController = new MessagesController();
 
       var showMessageBox = function(msg) {
           sap.m.MessageToast.show(msg, {
@@ -111,6 +122,11 @@
               at: "center center",
               duration: 1000
           });
+      }
+
+      function bindEvent(event_type, callback) {
+          $(document).unbind(event_type);
+          $(document).on(event_type, callback);
       }
 
       function doSend(message)

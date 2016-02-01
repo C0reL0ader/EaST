@@ -73,7 +73,7 @@ sap.ui.jsview("mvc.Main", {
             text:"Running modules"
         })
 
-        //HEADER TOOLBAR
+        //////////////HEADER TOOLBAR
         var reconnectButton = new sap.m.Button(this.createId("Main_ReconnectButton"), {
             text: "Reconnect",
             press: oController.reconnect
@@ -92,7 +92,9 @@ sap.ui.jsview("mvc.Main", {
             contentLeft: [reconnectButton, separator, targetLabel, targetTextBox],
             design: sap.m.BarDesign.Footer
         });
+        ////////////////////////////////
 
+        /////////////////SUBHEADER TOOLBAR
         var searchTextBox = new sap.m.SearchField(this.createId("SearchTextBox"), {
             width: "200px",
             placeholder: "Type to search...",
@@ -115,6 +117,7 @@ sap.ui.jsview("mvc.Main", {
             contentLeft: [searchTextBox, runModuleBtn, editorBtn],
             design: sap.m.BarDesign.Header
         });
+        /////////////////////////////////////
         
 
         mainPanel.addContent(headerToolar);

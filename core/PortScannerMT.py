@@ -43,12 +43,13 @@ class Scanner:
         self.scanners = []
         self.resp = []
 
-    def scan(self, search_for='opened',first_match=False, nthreads=1, send_fn=None):
+    def scan(self, search_for='opened',first_match=False, nthreads=1, send_fn=None, exclude=[]):
         """
         @param search_for(string): Search for 'opened', 'closed' or 'all' ports
         @param first_match(bool): If True returns only first scan result and stoping scanning
         @param nthreads(int): Number of threads
         @param send_fn(function): Callback to send results data
+        @param exclude(list(int)): Ports not to be to scanned
         @return(list): list of tuples(host, port, status)
         """
         self.resp = []
@@ -62,7 +63,7 @@ class Scanner:
         for scanner in self.scanners:
             scanner.start()
 
-        hostports = [(self.host, port) for port in xrange(self.from_port, self.to_port+1)]
+        hostports = [(self.host, port) for port in xrange(self.from_port, self.to_port+1) if port not in exclude]
         for hostport in hostports:
             toscan.put(hostport)
 

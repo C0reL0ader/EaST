@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Устанавливаем стандартную внешнюю кодировку = utf8
+import Queue
 import sys, os
 import asyncore
 import socket
@@ -7,6 +7,8 @@ import json
 import logging
 import time
 from websocket import create_connection
+import select
+
 
 class ListenerHandler(asyncore.dispatcher):
     def __init__(self, sock, listener):
@@ -16,25 +18,19 @@ class ListenerHandler(asyncore.dispatcher):
     def handle_read(self):        
         data = self.recv(8192).decode('cp866')        
         if data:
-            print data
             self.listener.send_message(data, 1)
 
     def handle_write(self):
-        if (time.time() - self.listener.start_time)>0.2 and self.listener.shell_addr:
-            self.listener.send_message("Shell connected to %s" % self.listener.shell_addr, 1)
-            self.listener.shell_addr = None    
-        command = self.listener.get_message().encode('cp866')
+        command = self.listener.get_message()
         if not command:
             return
-        self.send(command)
+        self.send(command.encode('cp866')+"\n")
 
     def handle_close(self):
-        if ((time.time() - self.listener.start_time)>0.2):
-            self.listener.send_message("\nShell was disconnected", 2)
-            self.listener.connection.close()
-            sys.exit(1)
-        self.listener.send_message("", 0)
+        self.listener.send_message("\nShell was disconnected", 2)
+        self.listener.connection.close()
         self.close()
+        sys.exit(1)
 
 
 class Listener(asyncore.dispatcher):
@@ -45,7 +41,9 @@ class Listener(asyncore.dispatcher):
         self.host = '0.0.0.0'
         self.port = 5555
         self.wsport = 49999
+        self.recieve_timeout = 0.2 #check for new messages from ui every 0.3 sec
         self.connection = create_connection("ws://%s:%s" % ("127.0.0.1", self.wsport))
+        self.hello()
         self.run()
 
     def run(self):
@@ -59,17 +57,17 @@ class Listener(asyncore.dispatcher):
         except socket.error as msg:
             print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
             sys.exit()
-        self.listen(5)
+        self.listen(1)
         self.send_message("Listening on %s:%s" % (self.host, str(self.port)))
 
     def handle_accept(self):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-            self.send_message('', 1)
-            self.start_time = time.time()
             self.shell_addr = repr(addr)
+            self.send_message("Shell connected to %s" % self.shell_addr, 1)
             handler = ListenerHandler(sock, self)
+
 
     def send_message(self, message, state=0):
         ''' Listener message to gui
@@ -79,32 +77,32 @@ class Listener(asyncore.dispatcher):
                       2 - shell disconnected
         '''
         self.logger.info(message)
-        req = dict(command="listener_message", args=dict(action="add", message=message, pid=self.pid, state=state))
+        req = dict(command="listener_message", args=dict(message=message, pid=self.pid, state=state))
         self.connection.send(json.dumps(req))
 
     def get_message(self):
-        req = dict(command="listener_message", args=dict(action="get", message="", pid=self.pid, state=None))
+        self.connection.sock.setblocking(0)
+        ready = select.select([self.connection.sock], [], [], self.recieve_timeout)
+        if ready[0]:
+            time.sleep(0.1)
+            resp = json.loads(self.connection.recv())
+            return resp["message"]
+        return None
+
+    def get_options(self):
+        req = dict(command="listener_get_options", args=dict(pid=self.pid))
         self.connection.send(json.dumps(req))
-        resp = dict(message='')
         try:
             resp = json.loads(self.connection.recv())
         except Exception:
             self.logger.exception(str(Exception))
-        finally:
-            self.logger.debug(resp["message"])
-            return resp["message"]
-
-    def get_options(self):
-        connection = create_connection("ws://%s:%s" % ("127.0.0.1", 49999))
-        req = dict(command="listener_get_options", args=dict(pid=self.pid))
-        connection.send(json.dumps(req))
-        try:
-            resp = json.loads(connection.recv())
-        except Exception:
-            self.logger.exception(str(Exception))
-        connection.close()
         self.logger.debug(resp)
         return resp
+
+    def hello(self):
+        data = dict(hello=dict(name=self.pid.__str__(), type="listener"))
+        self.connection.send(json.dumps(data))
+        hello = self.connection.recv()
 
 if __name__=="__main__":
     server = Listener()

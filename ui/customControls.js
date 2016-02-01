@@ -228,7 +228,7 @@ sap.m.IconTabHeader.extend("custom.controls.TabBarHeader", {
                     oRM.write("<div class='sapMITBHorizontalWrapper'>");
                 }
 
-                //счетчики не нужны
+                //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 
                 /*oRM.write("<span id='" + oItem.getId() + "-count' ");
                 oRM.addClass("sapMITBCount");
@@ -351,6 +351,7 @@ sap.m.IconTabFilter.extend("custom.controls.Tab", {
             this.$().find('#'+id+"-listener").toggleClass("moduleFailed", false);
             this.$().find('#' + id + "-listener").toggleClass("moduleSucceeded", false);    
         }
+        this.rerender();
     },
 
     getState: function(){

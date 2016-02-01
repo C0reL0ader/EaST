@@ -9,31 +9,10 @@ class Listener:
         self.process = process
         self.options = {}
         self.isShellConnected = 0
-        self.messagesFromGui = Queue.Queue()
-        self.messagesToGui = []
-        self.new_message_from_listener = False
+        self.messages = []
 
-    def addMessageFromGui(self, message):
-        self.messagesFromGui.put(message)
-
-    def getMessageFromGui(self):
-        if self.messagesFromGui.qsize() > 0:
-            command = self.messagesFromGui.get()
-            if command == "":
-                return ""
-            else:
-                return command + '\n'
-        return ""
-
-    def addMessageToGui(self, message):
-        self.new_message_from_listener = True
-        self.messagesToGui.append(message)
-
-    def getMessagesForGui(self):
-        if len(self.messagesToGui)>0:
-            return '\n'.join(self.messagesToGui)
-        else:
-            return ""
+    def addMessage(self, message):
+        self.messages.append(message)
 
     def addOption(self, option, value):
         self.options[option] = value
@@ -43,6 +22,12 @@ class Listener:
 
     def setShellConnected(self, state=0):
         self.isShellConnected = state
+
+    def getMessages(self):
+        return self.messages
+
+    def getMessagesFormatted(self):
+        return "\n".join(self.messages)
 
 class ListenerHandler:
     def __init__(self, server):
@@ -64,28 +49,20 @@ class ListenerHandler:
             self.listeners[module_name].process.kill()
             del self.listeners[module_name]
 
-    def addMessageFromGui(self, module_name, message):
+    def addMessage(self, module_name, message):
         if module_name not in self.listeners.keys():
             return
-        self.listeners[module_name].addMessageFromGui(message)
+        self.listeners[module_name].addMessage(message)
 
-    def getMessageFromGui(self, pid):
-        module_name = self.getModuleNameByPid(pid)
-        if module_name:
-            return self.listeners[module_name].getMessageFromGui()
-        return ""
-
-    def addMessageToGui(self, pid, message):
-        if not message:
-            return
-        module_name = self.getModuleNameByPid(pid)
-        if module_name:
-            self.listeners[module_name].addMessageToGui(message)
-
-    def getMessagesForGui(self, module_name):
+    def getModuleMessages(self, module_name):
         if module_name not in self.listeners.keys():
             return
-        return self.listeners[module_name].getMessagesForGui()
+        return self.listeners[module_name].getMessages()
+
+    def getModuleMessagesFormatted(self, module_name):
+        if module_name not in self.listeners.keys():
+            return
+        return self.listeners[module_name].getMessagesFormatted()
 
     def getModuleNameByPid(self, pid):
         for listener_name in self.listeners.keys():
@@ -93,15 +70,18 @@ class ListenerHandler:
                 return listener_name
         return None
 
+    def getPidByModuleName(self, module_name):
+        if module_name in self.listeners:
+            return self.listeners[module_name].process.pid
+        return None
+
     def getListenersMessages(self):
         res = {}
-        for listener_name in self.listeners.keys():
+        for listener_name, listener in self.listeners.iteritems():
             res[listener_name] = dict(
-                message=self.listeners[listener_name].getMessagesForGui(),
-                connected=self.listeners[listener_name].isShellConnected,
-                new_messages=self.listeners[listener_name].new_message_from_listener
+                message=listener.getMessagesFormatted(),
+                connected=listener.isShellConnected
             )
-            self.listeners[listener_name].new_message_from_listener = False
         return res
 
     def setListenerOptions(self, module_name, options):
@@ -127,4 +107,12 @@ class ListenerHandler:
     def get_listener_inst_by_name(self, module_name):
         if module_name in self.listeners.keys():
             return self.listeners[module_name]
+
+    def get_busy_ports_list(self):
+        """Gets ports with status 2"""
+        res = [int(listener.options["PORT"])
+               for listener_name, listener
+               in self.listeners.iteritems()
+               if listener.isShellConnected != 2]
+        return res
 

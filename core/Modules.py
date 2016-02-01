@@ -11,6 +11,9 @@ class ModuleMessageElement:
         self.time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.message = message
 
+    def formatted(self):
+        return "%s: %s" % (self.time, self.message)
+
 
 class RunningProcess:
     def __init__(self, module_name, process, options):
@@ -51,6 +54,7 @@ class ModulesHandler:
             self.processes[module_name].new_messages = True
             if state is not None:
                 self.processes[module_name].state = state
+            return self.processes[module_name]
 
     def register_process(self, module_name, original_name, process, options):
         """	Register new running module as process
@@ -68,7 +72,7 @@ class ModulesHandler:
             message_elements = self.processes[module_name].log
             temp_messages = []
             for element in message_elements:
-                temp_messages.append("%s: %s" % (element.time, element.message))
+                temp_messages.append(element.formatted())
             log[module_name] = dict(
                 state=self.processes[module_name].state,
                 message="\n".join(temp_messages),
@@ -84,7 +88,7 @@ class ModulesHandler:
         message_elements = module.log
         temp_messages = []
         for element in message_elements:
-            temp_messages.append("%s: %s" % (element.time, element.message))
+            temp_messages.append(element.formatted())
         log = dict(
                 state=self.processes[module_name].state,
                 message="\n".join(temp_messages),
