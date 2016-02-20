@@ -9,3 +9,9 @@ class Shellcode:
 
     def get_shellcode(self):
         return ''
+
+    def make_inline(self, payload):
+        payload = payload.replace('\t',' ')
+        payload = payload.replace('\r',' ')
+        payload = payload.replace('\n',' ')
+        return payload
