@@ -51,7 +51,7 @@ ServerCommandsHandler.prototype = {
     },
 
     onHello: function(args) {
-        //handshake with server
+        serverCommandsHandler.fireCustomEvent("hello", args);
     },
 
     fireCustomEvent: function(event_type, data) {

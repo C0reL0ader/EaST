@@ -8,6 +8,7 @@ import zipfile
 from shutil import rmtree
 import argparse
 import importlib
+import asyncore
 from core.WebSocketServer import WebSocketServer
 
 sys.path.append("./core")
@@ -105,11 +106,10 @@ class FrameworkStarter:
 
     def start_servers(self):
         print("Starting servers...")
-        ws_server = WebSocketServer("0.0.0.0", self.ws_port, 1000)
+        ws_server = WebSocketServer("", self.ws_port, 2000)
         http_server = BaseHTTPServer.HTTPServer((self.host, self.port), HTTPRequestHandler)
-        th1 = threading.Thread(target=ws_server.run)
         th2 = threading.Thread(target=http_server.serve_forever)
-        threads = [th1, th2]
+        threads = [th2]
         for t in threads:
             t.daemon = True
             t.start()
@@ -118,10 +118,11 @@ class FrameworkStarter:
             try:
                 # Join all threads using a timeout so it doesn't block
                 # Filter out threads which have been joined or are None
+                asyncore.loop()
                 threads = [t.join(1000) for t in threads if t is not None and t.isAlive()]
             except KeyboardInterrupt:
                 ws_server.kill_all_processes()
-                ws_server.stop()
+                ws_server.ExitNow('WS Server is quitting!')
                 http_server.shutdown()
                 os._exit(1)
 

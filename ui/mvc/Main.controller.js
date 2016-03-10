@@ -93,16 +93,17 @@ sap.ui.controller("mvc.Main", {
 		var infoTextControl = mainView.byId("Main_ModuleInfoTextView");
 		infoTextControl.destroyControls();
 		var indexOfCtrl = 0;
-		var description = event.oSource.getBindingContext().getProperty('DESCRIPTION') || "n/a";
+		var description = event.oSource.getBindingContext().getProperty('DESCRIPTION');
 		var vendor = event.oSource.getBindingContext().getProperty('VENDOR');		
 		var cve = event.oSource.getBindingContext().getProperty('CVE Name');
 		var downlink = event.oSource.getBindingContext().getProperty('DOWNLOAD_LINK');
-		var notes = event.oSource.getBindingContext().getProperty('NOTES') || "n/a";
+		var notes = (event.oSource.getBindingContext().getProperty('NOTES'));
+        notes = notes.replace(new RegExp("\n",'g'), "<br>");
 		var links = event.oSource.getBindingContext().getProperty('LINKS');
-		var vendorText  = "n/a";
-		var cveText = "n/a";
-		var downlinkText = "n/a";
-		var linkText = "n/a";
+		var vendorText  = "";
+		var cveText = "";
+		var downlinkText = "";
+		var linkText = "";
 		var oLink;
 
 		if (vendor) {
@@ -165,12 +166,12 @@ sap.ui.controller("mvc.Main", {
 			}
 		}		
 
-		var text = "<strong>Description:</strong> " + description + "<br>";
-        text += "<strong>Vendor:</strong> " + vendorText + "<br>";
-        text += "<strong>CVE Name:</strong> " + cveText + "<br>";
-        text += "<strong>Download link:</strong> " + downlinkText + "<br>";
-        text += "<strong>Links:</strong> " + linkText + "<br>";
-        text += "<strong>Notes:</strong> " + notes + "<br>";
+		var text = "<strong>Description:</strong> " + (description || "n/a") + "<br>";
+        text += "<strong>Vendor:</strong> " + (vendorText || "n/a") + "<br>";
+        text += "<strong>CVE Name:</strong> " + (cveText || "n/a") + "<br>";
+        text += "<strong>Download link:</strong> " + (downlinkText || "n/a") + "<br>";
+        text += "<strong>Links:</strong> " + (linkText || "n/a") + "<br>";
+        text += notes;
 		infoTextControl.setHtmlText(text);
 	},
 

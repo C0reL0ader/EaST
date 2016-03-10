@@ -2,7 +2,8 @@ var GuiCommandsHandler = function() {
 };
 
 GuiCommandsHandler.prototype = {
-    hello: function() {
+    hello: function(callback) {
+        bindEvent("hello", callback);
         doSend({"hello":{"name": "EastUI", "type":"ui"}})
     },
     

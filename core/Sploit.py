@@ -95,7 +95,6 @@ class Sploit:
             msg = "Module %s was succeeded" % self.name
         else:
             msg = "Module %s was failed" % self.name
-        time.sleep(0.1)
         self.send_message(msg, is_successful)
         sys.exit()
 
@@ -140,13 +139,16 @@ class Sploit:
                     state=is_successful, inline=inline, replace=replace)
         req = dict(command="message", args=args)
         self.connection.send(json.dumps(req))
+        # waiting for response
+        self.connection.recv()
         if is_successful is not None:
             self.connection.close()
 
     def hello(self):
         args = dict(hello=dict(name=self.pid.__str__(), type="module"))
         self.connection.send(json.dumps(args))
-        resp = self.connection.recv()
+        # wait for hello
+        self.connection.recv()
 
 if __name__ == "__main__":
     s = Sploit()

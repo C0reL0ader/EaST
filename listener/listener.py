@@ -21,7 +21,11 @@ class ListenerHandler(asyncore.dispatcher):
             self.listener.send_message(data, 1)
 
     def handle_write(self):
-        command = self.listener.get_message()
+        res = select.select([self.listener.connection.sock], [], [], 0.2)
+        if not res[0]:
+            return
+        resp = json.loads(self.listener.connection.recv())
+        command = resp["message"]
         if not command:
             return
         self.send(command.encode('cp866')+"\n")
@@ -30,6 +34,7 @@ class ListenerHandler(asyncore.dispatcher):
         self.listener.send_message("\nShell was disconnected", 2)
         self.listener.connection.close()
         self.close()
+        self.listener.close()
         sys.exit(1)
 
 
@@ -41,7 +46,7 @@ class Listener(asyncore.dispatcher):
         self.host = '0.0.0.0'
         self.port = 5555
         self.wsport = 49999
-        self.recieve_timeout = 0.2 #check for new messages from ui every 0.3 sec
+        self.handler = None
         self.connection = create_connection("ws://%s:%s" % ("127.0.0.1", self.wsport))
         self.hello()
         self.run()
@@ -61,12 +66,14 @@ class Listener(asyncore.dispatcher):
         self.send_message("Listening on %s:%s" % (self.host, str(self.port)))
 
     def handle_accept(self):
+        if self.handler:
+            return 
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
             self.shell_addr = repr(addr)
             self.send_message("Shell connected to %s" % self.shell_addr, 1)
-            handler = ListenerHandler(sock, self)
+            self.handler = ListenerHandler(sock, self)
 
 
     def send_message(self, message, state=0):
@@ -79,15 +86,6 @@ class Listener(asyncore.dispatcher):
         self.logger.info(message)
         req = dict(command="listener_message", args=dict(message=message, pid=self.pid, state=state))
         self.connection.send(json.dumps(req))
-
-    def get_message(self):
-        self.connection.sock.setblocking(0)
-        ready = select.select([self.connection.sock], [], [], self.recieve_timeout)
-        if ready[0]:
-            time.sleep(0.1)
-            resp = json.loads(self.connection.recv())
-            return resp["message"]
-        return None
 
     def get_options(self):
         req = dict(command="listener_get_options", args=dict(pid=self.pid))
@@ -102,7 +100,8 @@ class Listener(asyncore.dispatcher):
     def hello(self):
         data = dict(hello=dict(name=self.pid.__str__(), type="listener"))
         self.connection.send(json.dumps(data))
-        hello = self.connection.recv()
+        # wait for hello
+        self.connection.recv()
 
 if __name__=="__main__":
     server = Listener()
