@@ -238,7 +238,8 @@ class WebsocketHandler(asyncore.dispatcher):
 
     def handle_close(self):
         self.close()
-        del self.server.clients[self.socket]
+        if self.socket in self.server.clients:
+            del self.server.clients[self.socket]
 
 def parse_json(message):
     if not message:

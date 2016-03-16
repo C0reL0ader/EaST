@@ -25,7 +25,7 @@ WebsocketHandler.prototype = {
                 mainController.getModulesLog();
             });
             mainController.setConnectionState(true);
-            showMessageBox("Connected to "+this.websocket.url);
+            showMessageBox("Connected to "+websocketHandler.websocket.url);
             if (!window.refreshTimer) {
                 refreshTimer = setInterval(mainController.refresh, 300);
             }
