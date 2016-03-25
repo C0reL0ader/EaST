@@ -12,7 +12,7 @@ sys.path.append("./../core")
 from websocket import create_connection
 
 PORT = 49999
-HOST = "localhost"
+HOST = "127.0.0.1"
 
 #simple common exception handler for method run
 def _deco(self, func):
