@@ -8,6 +8,7 @@ function ServerCommandsHandler() {
                      "get_source": this.getSource,
                      "on_modules_log": this.onModulesLog,
                      "on_module_message": this.onModuleMessage,
+                     "show_message_box": this.showMessageBox,
                      "hello": this.onHello
                     };
     this.statuses = [];
@@ -52,6 +53,11 @@ ServerCommandsHandler.prototype = {
 
     onHello: function(args) {
         serverCommandsHandler.fireCustomEvent("hello", args);
+    },
+
+    showMessageBox: function(args) {
+        var message = args.message;
+        showMessageBox(message);
     },
 
     fireCustomEvent: function(event_type, data) {

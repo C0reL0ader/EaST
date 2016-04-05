@@ -58,7 +58,8 @@ class WebSocketServer(asyncore.dispatcher):
         self.all_processes.append(process)
 
     def remove_process(self, process):
-        self.all_processes.remove(process)
+        if process in self.all_processes:
+            self.all_processes.remove(process)
 
     def kill_all_processes(self):
         for client in self.clients.values():
@@ -97,6 +98,7 @@ class WebsocketHandler(asyncore.dispatcher):
         self.keep_alive = True
         self.valid_client = False
         self.data_to_write = Queue.Queue()
+        self.logger = logging.getLogger(__name__)
         asyncore.dispatcher.__init__(self, sock=sock)
         return
 
@@ -223,6 +225,7 @@ class WebsocketHandler(asyncore.dispatcher):
         type = args["type"]
         self.type = type
         self.name = name
+        self.logger.info("Hello," + self.name)
         self.send_message(json.dumps(dict(command="hello")))
 
     def check_and_make_unique_name(self, name, suffix=1):
@@ -247,6 +250,7 @@ def parse_json(message):
     try:
         data = json.loads(message)
     except Exception, e:
+        logging.getLogger(__name__).exception(e)
         return None
     return data
 

@@ -35,10 +35,10 @@ class FrameworkStarter:
         if not os.path.exists("Logs"):
             os.makedirs("Logs")
         self.logger = logging.getLogger()
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
         formatter = logging.Formatter('%(filename)s - %(asctime)s - %(levelname)s - %(message)s')
         fh = logging.FileHandler('Logs/commonLog.log')
-        fh.setLevel(logging.DEBUG)
+        fh.setLevel(logging.INFO)
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
         if verbose:

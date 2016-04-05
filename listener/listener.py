@@ -16,7 +16,7 @@ class ListenerHandler(asyncore.dispatcher):
         self.listener = listener
 
     def handle_read(self):        
-        data = self.recv(8192).decode('cp866')        
+        data = self.recv(8192)
         if data:
             self.listener.send_message(data, 1)
 
@@ -25,13 +25,15 @@ class ListenerHandler(asyncore.dispatcher):
         if not res[0]:
             return
         resp = json.loads(self.listener.connection.recv())
+        self.listener.logger.info("Recieved: " + str(resp))
         command = resp["message"]
         if not command:
             return
-        self.send(command.encode('cp866')+"\n")
+        self.send(command+"\n")
 
     def handle_close(self):
         self.listener.send_message("\nShell was disconnected", 2)
+        self.listener.logger.info("Shell was disconnected")
         self.listener.connection.close()
         self.close()
         self.listener.close()
@@ -42,6 +44,12 @@ class Listener(asyncore.dispatcher):
     def __init__(self):
         asyncore.dispatcher.__init__(self)
         self.logger = logging.getLogger()
+        self.logger.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(filename)s - %(asctime)s - %(levelname)s - %(message)s')
+        fh = logging.FileHandler('Logs/listener.log')
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
         self.pid = os.getpid()
         self.host = '0.0.0.0'
         self.port = 5555
@@ -60,7 +68,7 @@ class Listener(asyncore.dispatcher):
         try:
             self.bind((self.host, self.port))
         except socket.error as msg:
-            print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
+            self.logger.error('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
             sys.exit()
         self.listen(1)
         self.send_message("Listening on %s:%s" % (self.host, str(self.port)))
@@ -83,17 +91,18 @@ class Listener(asyncore.dispatcher):
                       1 - shell connected
                       2 - shell disconnected
         '''
-        self.logger.info(message)
+        self.logger.info(("Listener PID = %s" % self.pid) +  message)
         req = dict(command="listener_message", args=dict(message=message, pid=self.pid, state=state))
         self.connection.send(json.dumps(req))
 
     def get_options(self):
         req = dict(command="listener_get_options", args=dict(pid=self.pid))
         self.connection.send(json.dumps(req))
+        resp = {}
         try:
             resp = json.loads(self.connection.recv())
-        except Exception:
-            self.logger.exception(str(Exception))
+        except Exception as e:
+            self.logger.exception(e)
         self.logger.debug(resp)
         return resp
 

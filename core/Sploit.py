@@ -21,6 +21,7 @@ def _deco(self, func):
             res = func()
         except Exception as e:
             res = None
+            self.logger.exception(e)
             self.log(e)
             self.finish(False)
         return res
@@ -40,6 +41,12 @@ class Sploit:
         # PID of running module
         self.pid = os.getpid()
         self.logger = logging.getLogger()
+        self.logger.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(filename)s - %(asctime)s - %(levelname)s - %(message)s')
+        fh = logging.FileHandler('Logs/exploits.log')
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        self.logger.addHandler(fh)
         self.connection = create_connection("ws://%s:%s" % (HOST, PORT),
                                             sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),))
         self.hello()
@@ -51,6 +58,7 @@ class Sploit:
             This function get required options from server.
         """
         req = dict(command="get_args_for_module", args=dict(pid=self.pid))
+        self.logger.info(req.__str__())
         self.connection.send(json.dumps(req))
         resp = self.connection.recv()
         return json.loads(resp)
@@ -59,6 +67,7 @@ class Sploit:
         """
         :return: Listener options from server
         """
+        return
 
     def check(self):
         """
@@ -82,7 +91,10 @@ class Sploit:
             :param inline: Prints log inline
             :param replace: Replace last log message
         """
-        self.send_message(message, inline=inline, replace=replace)
+        try:
+            self.send_message(message, inline=inline, replace=replace)
+        except Exception as e:
+            self.logger.exception(e)
         return
 
     def finish(self, is_successful):

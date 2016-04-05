@@ -247,10 +247,16 @@ class Commands:
         resp = dict(command="get_source", args=dict(message=source, module_name=module_name))
         client.send_message(json.dumps(resp))
 
-    def save_source(self, args, request):
+    def save_source(self, args, client):
         """
         Save edited source code of module
         """
+        host, port = client.socket.getsockname()
+        if "localhost" not in host and "127.0.0.1" not in host:
+            message = "Only localhost user can save sources"
+            resp = dict(command="show_message_box", args=dict(message=message))
+            client.send_message(json.dumps(resp))
+            return
         code = args['message'].encode('utf-8')
         f = open(self.available_modules[args['module_name']],'w')
         f.write(code)

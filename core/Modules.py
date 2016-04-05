@@ -38,7 +38,7 @@ class ModulesHandler:
         self.processes = {}
         # Options of every module
         self.modules_options = {}
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing modules handler")
 
     def add(self, pid, new_message, state=None, inline=False, replace=False):
