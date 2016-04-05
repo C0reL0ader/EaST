@@ -6,13 +6,18 @@ import json
 import logging
 import socket
 
+#for random string
+from random import choice
+from string import ascii_letters
+from string import digits
+
 sys.path.append("./../core")
 
 
 from websocket import create_connection
 
 PORT = 49999
-HOST = "localhost"
+HOST = "127.0.0.1"
 
 #simple common exception handler for method run
 def _deco(self, func):
@@ -126,7 +131,7 @@ class Sploit:
             except Exception, exception:
                 """
                 ! The kind of error sould be
-                managed with respect to 
+                managed with respect to
                 os version or type...
                 """
                 self.logger.error(
@@ -161,6 +166,10 @@ class Sploit:
         self.connection.send(json.dumps(args))
         # wait for hello
         self.connection.recv()
+
+    def random_string(self, size=6, chars=ascii_letters + digits):
+        # you can change chars to digits or specify your string value
+        return ''.join(choice(chars) for _ in range(size))
 
 if __name__ == "__main__":
     s = Sploit()
