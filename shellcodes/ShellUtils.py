@@ -105,7 +105,7 @@ def get_objective_code(asm_file, target_arch, debug=0):
 
     command = "%s -f%s -o%s %s" % (find_app, output_format, obj_file, asm_file)
     print command
-    res = call(command.split())
+    res = call([find_app, "-f", output_format, "-o", obj_file, asm_file])
     if res == 0:
         if debug:
             print "Objective code has been created"
@@ -224,11 +224,14 @@ def make_binary_from_obj(o_file, os_target, os_target_arch, debug=0, is_dll=Fals
 
     c_exe = (o_file.split('.'))[0]
     if OS_SYSTEM == Constants.OS.LINUX:
+        binary_type = ""
+        if os_target == Constants.OS.WINDOWS:
+            binary_type = "-m i386pe"
         if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
             if is_dll:
-                cmd = "%s -shared -o %s %s" % (find_app, c_exe, o_file)
+                cmd = "%s %s -shared -o %s %s" % (find_app, binary_type, c_exe, o_file)
             else:
-                cmd = "%s -o %s %s" % (find_app, c_exe, o_file)
+                cmd = "%s %s -o %s %s" % (find_app, binary_type, c_exe, o_file)
             os.system(cmd)
 
         if os_target == Constants.OS.WINDOWS:
