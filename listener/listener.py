@@ -26,7 +26,7 @@ class ListenerHandler(asyncore.dispatcher):
             return
         resp = json.loads(self.listener.connection.recv())
         self.listener.logger.info("Recieved: " + str(resp))
-        command = resp["message"]
+        command = resp["message"].encode('cp866')
         if not command:
             return
         self.send(command+"\n")
@@ -91,7 +91,8 @@ class Listener(asyncore.dispatcher):
                       1 - shell connected
                       2 - shell disconnected
         '''
-        self.logger.info(("Listener PID = %s" % self.pid) +  message)
+        message = message.decode('cp866')
+        self.logger.info(("Listener PID = %s" % self.pid) + message)
         req = dict(command="listener_message", args=dict(message=message, pid=self.pid, state=state))
         self.connection.send(json.dumps(req))
 

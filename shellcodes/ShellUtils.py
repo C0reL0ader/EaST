@@ -10,7 +10,7 @@ OS_ARCH = (architecture())[0]
 
 class Constants:
     SHELLCODES_REL_PATH = '3rdPartyTools/ShellcodesUtils/'
-    TMP_DIR = 'tmp'
+    TMP_DIR = os.getcwd() + '/tmp'
     class OS:
         WINDOWS = "WINDOWS"
         LINUX = "LINUX"
@@ -45,7 +45,8 @@ def search_file(filename, search_path, iterations=3):
         parent_path += os.pardir + os.sep
     return None
 
-def write_file(data, file_ext='', prefix=''):
+
+def write_file(data, file_ext='', file_name=''):
     """
         Function to create file
     """
@@ -55,8 +56,9 @@ def write_file(data, file_ext='', prefix=''):
 
     if not file_ext.startswith('.'):
         file_ext = '.' + file_ext
-
-    file_name = prefix + TIMESTAMP + file_ext
+    if not file_name:
+        file_name = TIMESTAMP
+    file_name += file_ext
     file_path = os.path.join(Constants.TMP_DIR, file_name)
 
     fd = open(file_path, 'wb+')
@@ -90,7 +92,7 @@ def get_objective_code(asm_file, target_arch, debug=0):
 
         find_app = search_file("%s" % app, Constants.SHELLCODES_REL_PATH)
         if find_app:
-            if debug == 1:
+            if debug:
                 print "app: '%s' found at %s" % (app, find_app)
         else:
             print "You must install app: '%s' and maybe edit environment variables path to it" % app
@@ -105,7 +107,7 @@ def get_objective_code(asm_file, target_arch, debug=0):
     print command
     res = call(command.split())
     if res == 0:
-        if debug == 1:
+        if debug:
             print "Objective code has been created"
         return obj_file
     else:
@@ -128,7 +130,7 @@ def objdump(obj_file, os_target_arch, debug=0):
 
             find_app = search_file("%s" % app, Constants.SHELLCODES_REL_PATH)
             if find_app:
-                if debug == 1:
+                if debug:
                     print "app: '%s' found at %s" % (app, find_app)
             else:
                 print "You must install app: '%s' and maybe edit environment variables path to it" % app
@@ -157,18 +159,20 @@ def objdump(obj_file, os_target_arch, debug=0):
         else:
             raise ValueError(stderrdata)
 
-    if res and debug == 1:
+    if res and debug:
         print "Objdump is created"
 
     print res
     return res
 
 
-def create_shellcode(asm_code, os_target, os_target_arch, make_exe=0, debug=0):
+def create_shellcode(asm_code, os_target, os_target_arch, make_exe=0, debug=0, filename="", dll_inj_funcs=[]):
+    if os_target == Constants.OS.LINUX:
+        dll_inj_funcs = []
     if OS_ARCH == Constants.OS_ARCH.X32 and os_target_arch == Constants.OS_ARCH.X64:
         print "ERR: can not create shellcode for this os_target_arch (%s) on os_arch (%s)" % (os_target_arch, OS_ARCH)
         return None
-    asm_file = write_file(asm_code, '.asm')
+    asm_file = write_file(asm_code, '.asm', filename)
     obj_file = get_objective_code(asm_file, os_target_arch, debug)
 
     # stage_2:
@@ -177,12 +181,26 @@ def create_shellcode(asm_code, os_target, os_target_arch, make_exe=0, debug=0):
         shellcode = shellcode.replace('\\x', '').decode('hex')
     else:
         return None
-    if (make_exe):
-        make_exe_from_obj(obj_file, os_target, os_target_arch, debug)
-    return shellcode
+    if make_exe:
+        make_binary_from_obj(obj_file, os_target, os_target_arch, debug)
+    if dll_inj_funcs:
+        generate_dll(os_target, os_target_arch, asm_code, filename, dll_inj_funcs, debug)
+    return shellcode, asm_file.split(".")[0]
+
+def generate_dll(os_target, os_target_arch, asm_code, filename, dll_inj_funcs, debug):
+    asm_code = asm_code.replace("global _start", "").replace("_start:", "")
+    additional_code = ""
+    for func in dll_inj_funcs:
+        additional_code += "global _{}\r\n".format(func)
+    for func in dll_inj_funcs:
+        additional_code += "_{}:\r\n".format(func)
+    asm_code = additional_code + asm_code
+    asm_file = write_file(asm_code, '.asm', filename)
+    obj_file = get_objective_code(asm_file, os_target_arch, debug)
+    make_binary_from_obj(obj_file, os_target, os_target_arch, debug, True)
 
 
-def make_exe_from_obj(o_file, os_target, os_target_arch, debug=0):
+def make_binary_from_obj(o_file, os_target, os_target_arch, debug=0, is_dll=False):
     """
         Function for test shellcode with app written on c-language
     """
@@ -193,7 +211,7 @@ def make_exe_from_obj(o_file, os_target, os_target_arch, debug=0):
 
         find_app = search_file("%s" % app, Constants.SHELLCODES_REL_PATH)
         if find_app:
-            if debug == 1:
+            if debug:
                 print "app: '%s' found at %s" % (app, find_app)
         else:
             print "You must install app: '%s' and maybe edit environment variables path to it" % app
@@ -207,16 +225,25 @@ def make_exe_from_obj(o_file, os_target, os_target_arch, debug=0):
     c_exe = (o_file.split('.'))[0]
     if OS_SYSTEM == Constants.OS.LINUX:
         if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
-            cmd = "%s -o %s %s" % (find_app, c_exe, o_file)
+            if is_dll:
+                cmd = "%s -shared -o %s %s" % (find_app, c_exe, o_file)
+            else:
+                cmd = "%s -o %s %s" % (find_app, c_exe, o_file)
             os.system(cmd)
 
         if os_target == Constants.OS.WINDOWS:
-            os.rename(c_exe, c_exe + '.exe')
+            if is_dll:
+                os.rename(c_exe, c_exe + '.dll')
+            else:
+                os.rename(c_exe, c_exe + '.exe')
 
     elif OS_SYSTEM == Constants.OS.WINDOWS:
-        c_exe = c_exe + ".exe"
+        c_exe += ".dll" if is_dll else ".exe"
         if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
-            cmd = "%s -o %s %s" % (find_app, c_exe, o_file)
+            if is_dll:
+                cmd = "%s -shared -o %s %s" % (find_app, c_exe, o_file)
+            else:
+                cmd = "%s -o %s %s" % (find_app, c_exe, o_file)
             os.system(cmd)
 
         if os_target == Constants.OS.LINUX:

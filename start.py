@@ -16,7 +16,7 @@ sys.path.append("./core/helpers/java")
 sys.path.append("./core/helpers/archieve")
 sys.path.append("./shellcodes")
 
-VERSION = "0.9.11"
+VERSION = "0.9.12"
 
 class FrameworkStarter:
     def __init__(self, host="localhost", ws_port=49999, port=80):
@@ -25,7 +25,7 @@ class FrameworkStarter:
         self.ws_port = ws_port
         self.platform = "win" if os.name == "nt" else "other"
         self.logger = None
-        self.prepare_logging(False)
+        self.prepare_logging(True)
         self.prepare_environment()
         self.dependencies = ["setuptools", "six", "websocket"]
         self.install_missing_deps()
@@ -43,7 +43,7 @@ class FrameworkStarter:
         self.logger.addHandler(fh)
         if verbose:
             ch = logging.StreamHandler()
-            ch.setLevel(logging.DEBUG)
+            ch.setLevel(logging.WARNING)
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
 
