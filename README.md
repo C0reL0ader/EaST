@@ -21,11 +21,14 @@ Tests for Windows and Linux. Should function everywhere where Python is installe
     In spite of simplicity and “unoverload” the framework has all necessary resources for wide range exploits to run, starting from Web to buffer overruns.
 * Wide enhancement possibilities.
     Third party developers can create their own open source solutions or participate in EAST development by use of Server-client architecture, message traffic API and support libraries.
+
 ## 2. Requirements
 * [Python 2](https://www.python.org/downloads/)
+
 ## 3. Usage
     git clone https://github.com/C0reL0ader/EaST && cd EaST
     python start.py
+
 ## 4. Additional resources
 * Exploits and Security Tools Framework [website](http://eastfw.com/).
 * [EaST Exploits DB](http://eastexploits.com/)
