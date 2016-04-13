@@ -1,6 +1,6 @@
 ![EaST Framework](https://github.com/C0reL0ader/EaST/blob/master/logo.png "EaST Framework")
 # «EAST» – «Exploits And Security Tools» penetration testing framework.
----
+
 ## 1. Overview
 Pentest framework environment is the basis of IT security specialist’s toolkit.
 This software is essential as for learning and improving of knowledge in IT systems attacks and for inspections and proactive protection.
