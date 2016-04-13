@@ -78,12 +78,12 @@ class OSShellcodes:
 
     def get_exe_path(self):
         if os.path.exists(self.binary_path + ".exe"):
-            return self.binary_path + ".exe"
+            return os.path.normpath(self.binary_path + ".exe")
         return None
 
     def get_dll_path(self):
         if os.path.exists(self.binary_path + ".dll"):
-            return self.binary_path + ".dll"
+            return os.path.normpath(self.binary_path + ".dll")
         return None
 
 if __name__ == "__main__":
