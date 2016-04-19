@@ -7,7 +7,7 @@ class Shellcode:
         self.BADCHARS = badchars
         return
 
-    def get_shellcode(self):
+    def get_shellcode(self, inline=False):
         return ''
 
     def make_inline(self, payload):

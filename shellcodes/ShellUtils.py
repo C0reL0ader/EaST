@@ -24,9 +24,11 @@ class Constants:
         FNSTENV_XOR = "fnstenv"
         JUMPCALL_XOR = "jumpcall"
     class ShellcodeType:
-        JAVA = "java"
+        JSP = "jsp"
+        JAR = "jar"
         PYTHON = "python"
         PHP = "php"
+        ASPX = "aspx"
     class JavaShellcodeType:
         JSP = "jsp"
         JAR = "jar"

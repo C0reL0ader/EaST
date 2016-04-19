@@ -86,15 +86,12 @@ try {
         remove_jar = not self.make_jar
         return jar.get_raw(remove_jar)
 
-    def get_shellcode(self):
+    def get_shellcode(self, inline=False):
         if not hasattr(Constants.JavaShellcodeType, self.type.upper()):
             raise Exception("There no Java payload of this type.")
+        shell = ""
         if self.type == Constants.JavaShellcodeType.JAR:
-            return self.get_jar()
-        return self.get_jsp()
-
-    def make_inline(self, payload):
-        payload = payload.replace('\t',' ')
-        payload = payload.replace('\r',' ')
-        payload = payload.replace('\n',' ')
-        return payload
+            shell = self.get_jar()
+        elif self.type == Constants.JavaShellcodeType.JSP:
+            shell = self.get_jsp(inline)
+        return shell
