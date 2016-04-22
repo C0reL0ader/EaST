@@ -449,7 +449,7 @@ get_shellcode:
 """
 
         asm_code = asm_code.replace('USER_SHELLCODE', _shellcode)
-        encoded_shellcode = create_shellcode(asm_code, self.OS_TARGET, self.OS_TARGET_ARCH, debug=debug)
+        encoded_shellcode, _ = create_shellcode(asm_code, self.OS_TARGET, self.OS_TARGET_ARCH, debug=debug)
         return encoded_shellcode
 
     def xor_encoder(self, _byte_arr, debug=0):
@@ -539,7 +539,7 @@ call_decoder:
 """ % (n_hex, n_hex, n_hex)
 
         asm_code = asm_code.replace('USER_SHELLCODE', _shellcode)
-        encoded_shellcode = create_shellcode(asm_code, self.OS_TARGET, self.OS_TARGET_ARCH, debug=debug)
+        encoded_shellcode, _ = create_shellcode(asm_code, self.OS_TARGET, self.OS_TARGET_ARCH, debug=debug)
         return encoded_shellcode
 
     def rot_13_encoder(self, _shellcode, debug=0):
