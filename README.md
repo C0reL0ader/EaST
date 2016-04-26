@@ -27,7 +27,7 @@ Tests for Windows and Linux. Should function everywhere where Python is installe
 
 ## 3. Usage
     git clone https://github.com/C0reL0ader/EaST && cd EaST
-    python start.py
+    python start.py [-p PORT] [--all-interfaces]
 
 ## 4. Additional resources
 * Exploits and Security Tools Framework [website](http://eastfw.com/).
