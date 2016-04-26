@@ -93,7 +93,7 @@ class FrameworkStarter:
         parser = argparse.ArgumentParser()
         parser.add_argument('-p', dest='port', default=80, type=int,
                             help='Webserver port')
-        parser.add_argument('--default-route', dest='use_default_route',
+        parser.add_argument('--all-interfaces', dest='use_default_route',
                             help='Use 0.0.0.0 as webserver IP', action='store_const',
                             const=True,
                             default=False)
@@ -106,7 +106,7 @@ class FrameworkStarter:
 
     def start_servers(self):
         print("Starting servers...")
-        ws_server = WebSocketServer("", self.ws_port, 2000)
+        ws_server = WebSocketServer(self.host, self.ws_port, 2000)
         http_server = BaseHTTPServer.HTTPServer((self.host, self.port), HTTPRequestHandler)
         th2 = threading.Thread(target=http_server.serve_forever)
         threads = [th2]
