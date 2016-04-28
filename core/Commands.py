@@ -30,7 +30,8 @@ class Commands:
                          "gui_command_to_listener": self.gui_command_to_listener,
                          "get_source": self.get_source,
                          "save_source": self.save_source,
-                         "generate_report": self.generate_report
+                         "generate_report": self.generate_report,
+                         "is_listener_connected": self.is_listener_connected
                          }
         self.server = server
         self.using_module = ""
@@ -261,6 +262,29 @@ class Commands:
         f = open(self.available_modules[args['module_name']],'w')
         f.write(code)
         f.close()
+
+    def is_listener_connected(self, args, client):
+        """ Get info about state of listener
+        :param args: (dict) {
+                        pid : (int) module's pid
+                    }
+        :return: (dict) {
+                    state: Bool or None
+                }
+        """
+        state = None
+        pid = args.get("pid")
+        if pid:
+            module_name = self.modules_handler.get_module_name_by_pid(pid)
+            listener = self.listener_handler.get_listener_inst_by_name(module_name)
+            if listener:
+                state = listener.isShellConnected
+                if state == 0:
+                    state = False
+                elif state == 1:
+                    state = True
+        resp = dict(state=state)
+        client.send_message(json.dumps(resp))
 
     def generate_report(self, pid):
         module_name = self.modules_handler.get_module_name_by_pid(pid)

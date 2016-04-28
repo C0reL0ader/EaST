@@ -161,6 +161,25 @@ class Sploit:
         if is_successful is not None:
             self.connection.close()
 
+    def is_listener_connected(self):
+        """
+        Check listener state
+        :return: True - if shell is connected to listener
+                 False - if shell is not connected to listener
+                 None - if listener is not available
+        """
+        time.sleep(1) # for limiting requests
+        args = dict(pid=self.pid)
+        req = dict(command="is_listener_connected", args=args)
+        self.connection.send(json.dumps(req))
+        state = None
+        try:
+            resp = self.connection.recv()
+            state = json.loads(resp).get("state")
+        except Exception as e:
+            self.logger.exception(e)
+        return state
+
     def hello(self):
         args = dict(hello=dict(name=self.pid.__str__(), type="module"))
         self.connection.send(json.dumps(args))

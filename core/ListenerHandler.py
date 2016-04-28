@@ -21,6 +21,10 @@ class Listener:
         return self.options
 
     def setShellConnected(self, state=0):
+        """
+        :param state: (int) 0 - shell is not connected, 1 - shell connected, 2 - shell disconnected
+        :return:
+        """
         self.isShellConnected = state
 
     def getMessages(self):
