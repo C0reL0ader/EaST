@@ -18,7 +18,7 @@ class ShellGenerator:
             return
         self.OS_TARGET_ARCH = OS_TARGET_ARCH
     
-    def get_shellcode(self, type, message="", connectback_ip="127.0.0.1", connectback_port=5555, command="", make_exe=0, debug=0, filename="payload", dll_inj_funcs=[]):
+    def get_shellcode(self, type, message="", connectback_ip="127.0.0.1", connectback_port=5555, command="", make_exe=0, debug=0, filename="", dll_inj_funcs=[]):
         if not self.target:
             print("Generating shellcodes for '%s' OS is not supported" % self.os_target)
             return None

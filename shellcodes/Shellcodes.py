@@ -4,9 +4,12 @@
 import os
 import time
 import sys
+east_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
+sys.path.append(east_path)
+
 from platform import system, architecture
 
-from Asm import ShellGenerator, Constants
+from Asm import ShellGenerator
 from Encoders import *
 from ast import literal_eval
 from JavaShellcode import JavaShellcodes
@@ -42,7 +45,7 @@ class OSShellcodes:
         return
 
     def create_shellcode(self, _shellcode_type='reverse', command='calc.exe', message='', encode=None, make_exe=0,
-                         debug=0, filename="test", dll_inj_funcs=[]):
+                         debug=0, filename="", dll_inj_funcs=[]):
         """
         Function for create shellcode.
         :param _shellcode_type: (string) Can be "reverse" or "message" for Linux shellcodes and "reverse", "message", "command" for Windows shellcodes.
