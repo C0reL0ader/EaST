@@ -23,6 +23,12 @@ class OptionsParser:
         res = OrderedDict()
         for option in options.keys():
             value = options[option]
+            ext_options = {}
+            # check for extended options
+            if type(value) is tuple:
+                if len(value) > 1 and type(value[1] is dict):
+                    ext_options = value[1]
+                value = value[0]
             if type(value) is int:
                 res[option] = dict(type="int", value=value)
             elif type(value) is bool:
@@ -32,4 +38,5 @@ class OptionsParser:
                 res[option]["type"] = "list"
             else:
                 res[option] = dict(type="string", value=value)
+            res[option].update(ext_options)
         return res

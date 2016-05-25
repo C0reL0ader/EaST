@@ -50,6 +50,7 @@ sap.ui.jsview("mvc.RunDialog", {
             }
 
             return new sap.ui.commons.layout.MatrixLayoutRow({
+                tooltip: "{= ${value/description} || ${option} }",
                 cells: [
                     new sap.ui.commons.layout.MatrixLayoutCell({
                         content: new sap.ui.commons.Label({text:"{option}:", width: "100%"})
