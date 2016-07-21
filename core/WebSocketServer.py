@@ -165,9 +165,22 @@ class WebsocketHandler(asyncore.dispatcher):
         self.buffer = self.buffer[num:]
         return data
 
+    def recv_all(self, chunk=4096):
+        buffer = []
+        while 1:
+            try:
+                data = self.recv(chunk)
+                buffer.append(data)
+            except socket.error, e:
+                err = e.args[0]
+                if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
+                    #  There is no data
+                    break
+        return "".join(buffer)
+
     def read_next_message(self):
         try:
-            self.buffer = self.recv(8192)
+            self.buffer = self.recv_all()
         except socket.error as error:
             if error.errno == errno.WSAECONNRESET:
                 pass
@@ -243,6 +256,7 @@ class WebsocketHandler(asyncore.dispatcher):
         self.close()
         if self.socket in self.server.clients:
             del self.server.clients[self.socket]
+
 
 def parse_json(message):
     if not message:

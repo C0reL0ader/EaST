@@ -5,6 +5,7 @@ import asyncore
 import socket
 import json
 import logging
+import errno
 import time
 from websocket import create_connection
 import select
@@ -16,9 +17,22 @@ class ListenerHandler(asyncore.dispatcher):
         self.listener = listener
 
     def handle_read(self):        
-        data = self.recv(8192)
+        data = self.recv_all()
         if data:
             self.listener.send_message(data, 1)
+
+    def recv_all(self, chunk=4096):
+        buffer = []
+        while 1:
+            try:
+                data = self.recv(chunk)
+                buffer.append(data)
+            except socket.error, e:
+                err = e.args[0]
+                if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
+                    #  There is no data
+                    break
+        return "".join(buffer)
 
     def handle_write(self):
         res = select.select([self.listener.connection.sock], [], [], 0.2)
