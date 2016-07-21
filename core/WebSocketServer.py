@@ -170,6 +170,8 @@ class WebsocketHandler(asyncore.dispatcher):
         while 1:
             try:
                 data = self.recv(chunk)
+                if not data:
+                    break
                 buffer.append(data)
             except socket.error, e:
                 err = e.args[0]
