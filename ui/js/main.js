@@ -62,10 +62,13 @@ $(document).ready(function() {
                 if (args.state != null) {
                     module.state = args.state;
                 }
-                //var selector = '.tab-content #tab_item_' + index + ' > pre';
-                //Vue.nextTick(function () {
-                //    $(selector).scrollTop($(selector)[0].scrollHeight);
-                //})
+                if (index != -1) {
+                    var selector = '.tab-content #tab_item_' + index + ' .logView';
+                    Vue.nextTick(function () {
+                       $(selector).scrollTop($(selector)[0].scrollHeight);
+                    })
+                }
+                
             },
 
             onListenerMessage: function(e) {
@@ -84,10 +87,10 @@ $(document).ready(function() {
                     toastr.warning("Listener disconnected from " + args.module_name);
                 }
                 module.listenerState = listenerState;
-                //var selector = '.tab-content #tab_item_' + index + ' .panel pre';
-                //Vue.nextTick(function () {
-                //    $(selector).scrollTop($(selector)[0].scrollHeight);
-                //})
+                var selector = '.tab-content #tab_item_' + index + ' .pre-scrollable';
+                Vue.nextTick(function () {
+                   $(selector).scrollTop($(selector)[0].scrollHeight);
+                })
             }
         }
     })

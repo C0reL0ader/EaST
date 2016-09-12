@@ -76,6 +76,9 @@ pre {
 .half-height {
     height: 40% !important;
 }
+.full-height {
+    height: 80% !important;
+}
 .logView {
     padding-left: 10px;
     overflow: auto;
@@ -147,5 +150,9 @@ pre {
 }
 #optionsDialog table {
     width: 100%;
+}
+
+.treeView li {
+    white-space: nowrap;
 }
 

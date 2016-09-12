@@ -41,13 +41,13 @@ html
               label Use listener:
             td
               input(type="checkbox", v-model="useListener")
-          tr(v-for="option in options")
+          tr(v-for="option in options", title="{{option.value.description || ''}}")
             td 
               label {{option.option}}:
             td
               input.form-control(v-show="option.value.type == 'int'",type="number", v-model="option.value.value")
               input.form-control(v-show="option.value.type == 'string'",type="", v-model="option.value.value")
-              input.form-control(v-show="option.value.type == 'bool'",type="checkbox", v-model="option.value.value")
+              input(v-show="option.value.type == 'bool'",type="checkbox", v-model="option.value.value")
               select.form-control(v-show="option.value.type == 'list'", v-model="option.value.selected")
                 option(v-for="opt in option.value.options", :selected="opt == option.value.selected") {{opt}}
         div(slot="header").text-center
@@ -73,7 +73,7 @@ html
       .container-fluid
         .row
           .col-md-4
-            tree-view(:model.sync="modules").fg-white.left-panel
+            tree-view(:model.sync="modules").fg-white
             re-module-info.left-panel(:module.sync="selectedModule")
           .col-md-8
             tab-view(:tabs.sync="tabs") 

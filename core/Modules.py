@@ -147,6 +147,8 @@ class ModulesHandler:
     def get_module_info(self, name):
         module = self.import_from_uri(name[0])
         if hasattr(module, 'INFO'):
+            if type(module.INFO.get('LINKS')) is not list:
+                module.INFO['LINKS'] = [module.INFO.get('LINKS', '')]
             module.INFO["NAME"] = name[1]
             return module.INFO
         return None

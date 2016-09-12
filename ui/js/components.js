@@ -8,7 +8,7 @@ var tree_template = function(){/*
         <button v-show="model.isFile" class="btn btn-default btn-xs" @click="edit">
           <span class="mif-pencil"></span>
         </button>
-        <span class="leaf" @click="select" >{{model.NAME}}</span>
+        <span class="leaf" @click="select" @dblclick="run">{{model.NAME}}</span>
         <span v-if="model.children" class="node-toggle" @click="open=!open"></span>
         <tree-node v-if="model.children" v-for="child in model.children" :model.sync="child" />
     </li>
@@ -167,7 +167,7 @@ var tab_view_template = function(){/*
             <b>Log for {{tab.title}}</b>
           </div>
           <div class="panel-body">
-            <div class="logView" :class="{'half-height': tab.useListener}">
+            <div class="logView" :class="{'half-height': tab.useListener, 'full-height': !tab.useListener}">
               <re-log-view :messages.sync="tab.content" ></re-log-view>
             </div> 
           </div>
@@ -439,11 +439,11 @@ var moduleInfo = function(){/*
         <br>
         <b>CVE:</b> {{module['CVE Name'] || 'N/A'}} <br>
         <b>Links:</b>
-        <ol>
-          <li v-show="module.LINKS.length" v-for="link in module.LINKS">
+        <ol v-show="module.LINKS.length">
+          <li v-for="link in module.LINKS">
             <a href="{{link}}">{{link}}</a>
           </li>
-        </ol>
+        </ol>        
         <div v-show="!module.LINKS.length" :style="displayInline">N/A</div>
         <br>
         <b>Download link:</b> 
@@ -464,6 +464,12 @@ Vue.component('re-module-info', {
   computed: {
     displayInline: function() {
       return 'display: inline;'
+    },
+    isArray: function() {
+      return _.isArray(module.LINKS);
+    },
+    isString: function() {
+      return _.isString(module.LINKS);
     }
   }
 })
