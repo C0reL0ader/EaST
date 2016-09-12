@@ -1,0 +1,151 @@
+* {
+	box-sizing: border-box;
+}
+
+.modal {
+    display: block;
+}
+.modal-transition {
+    transition: all .6s ease;
+}
+.modal-leave {
+    border-radius: 1px !important;
+}
+.modal-transition .modal-dialog, .modal-transition .modal-backdrop {
+    transition: all .5s ease;
+}
+.modal-enter .modal-dialog, .modal-leave .modal-dialog {
+    opacity: 0;
+    transform: translateY(-30%);
+}
+.modal-enter .modal-backdrop, .modal-leave .modal-backdrop {
+    opacity: 0;
+}
+.modal-full {
+    width: 90vw;
+}
+.modal-full img {
+    width: 100%;
+}
+.modal-header {
+    background-color: #222;
+    color: white;
+}
+
+
+
+.closeTab {
+    line-height: 100%;
+    position: absolute;
+    right: 0;
+    text-align: center;
+    top: 0;
+    width: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+
+pre {
+    white-space: pre-wrap;
+	word-wrap: break-word;
+	word-break: keep-all;    
+}
+.module-failed {
+	background-color: rgb(255, 190, 190) !important;
+}
+.module-succeeded {
+	background-color: rgb(186, 220, 180) !important;
+}
+
+.scrollable-panel {
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: keep-all;
+}
+
+.scrollable-panel pre {
+    overflow-y: hidden;
+}
+
+.tab-widget {
+    height: 90vh;
+}
+
+.half-height {
+    height: 40% !important;
+}
+.logView {
+    padding-left: 10px;
+    overflow: auto;
+}
+.CodeMirror {
+  border: 1px solid #eee;
+  height: 800px;
+  max-height: 800px;
+}
+
+.listener-state-indicator {
+    position: relative;
+    height: 15px;
+    width: 15px;
+    background-color: #555;
+    display: inline-flex;
+    border-radius: 50%;
+    box-shadow: 0px 0px 0px 3px #fff inset;
+    top: 3px;
+    right: 10px;
+    margin-right: 0px;
+}
+.listener-connected {
+    background-color: #49c749;
+}
+.listener-disconnected {
+    background-color: red;
+}
+.tabcontrol2 .tabs li:first-child {
+    margin-left: 0px;
+}
+.pre-scrollable {
+    height: 60%;
+    overflow-y: scroll;
+}
+
+.logItem pre {
+    display: block;
+    padding: 0px 0px;
+    margin: 0px 0px;
+    font-size: 13px;
+    /* line-height: 1.42857143; */
+    color: #333;
+    word-break: break-all;
+    word-wrap: break-word;
+    background-color: #eee;
+    border: 0px solid #ccc;
+}
+
+.logItem img {
+    width: 150px;
+    border: 1px solid grey;
+    border-radius: 10px;
+    box-shadow: 3px 3px 10px;
+    bac
+}
+
+.tab-widget .panel-body {
+    border-left: 1px solid grey;
+    border-right: 1px solid grey;
+    border-bottom: 1px solid grey;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+.left-panel {
+    width: 100% !important;
+    height: 40% !important;
+    overflow: auto;
+}
+#optionsDialog table {
+    width: 100%;
+}
+

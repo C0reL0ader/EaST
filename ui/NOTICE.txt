@@ -1,2 +1,0 @@
-SAPUI5 / OpenUI5
-Copyright (c) 2014 SAP SE or an SAP affiliate company. All rights reserved.

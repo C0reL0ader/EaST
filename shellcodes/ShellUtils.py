@@ -243,6 +243,7 @@ def make_binary_from_obj(o_file, os_target, os_target_arch, debug=0, is_dll=Fals
                 os.rename(c_exe, c_exe + '.exe')
 
     elif OS_SYSTEM == Constants.OS.WINDOWS:
+        linux_name = c_exe
         c_exe += ".dll" if is_dll else ".exe"
         if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
             if is_dll:
@@ -252,7 +253,9 @@ def make_binary_from_obj(o_file, os_target, os_target_arch, debug=0, is_dll=Fals
             os.system(cmd)
 
         if os_target == Constants.OS.LINUX:
-            os.rename(c_exe + '.exe', c_exe)
+            if os.path.exists(linux_name):
+                os.remove(linux_name)
+            os.rename(c_exe, linux_name)
     else:
         print "ERR: source os (%s) is not supported" % OS_SYSTEM
 

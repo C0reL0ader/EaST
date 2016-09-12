@@ -7,12 +7,17 @@ import traceback
 
 
 class ModuleMessageElement:
-    def __init__(self, message):
+    def __init__(self, message, type="text"):
         self.time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.message = message
+        self.type = type
 
     def formatted(self):
-        return "%s: %s" % (self.time, self.message)
+        return {
+            "time": self.time,
+            "message": self.message,
+            "type": self.type
+        }
 
 
 class RunningProcess:
@@ -28,7 +33,6 @@ class RunningProcess:
         self.options = options
         self.log = []
         self.state = None
-        self.new_messages = False
 
 
 class ModulesHandler:
@@ -41,17 +45,16 @@ class ModulesHandler:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing modules handler")
 
-    def add(self, pid, new_message, state=None, inline=False, replace=False):
+    def add(self, pid, new_message, state=None, inline=False, replace=False, type='text'):
         module_name = self.get_module_name_by_pid(pid)
         if module_name in self.processes:
             if inline:
                 current_message = self.processes[module_name].log[-1].message
                 self.processes[module_name].log[-1].message = current_message + new_message
             else:
-                self.processes[module_name].log.append(ModuleMessageElement(new_message))
+                self.processes[module_name].log.append(ModuleMessageElement(new_message, type))
             if replace:
                 self.processes[module_name].log[-1].message = new_message
-            self.processes[module_name].new_messages = True
             if state is not None:
                 self.processes[module_name].state = state
             return self.processes[module_name]
@@ -75,10 +78,8 @@ class ModulesHandler:
                 temp_messages.append(element.formatted())
             log[module_name] = dict(
                 state=self.processes[module_name].state,
-                message="\n".join(temp_messages),
-                new_messages=self.processes[module_name].new_messages
+                message=temp_messages,
             )
-            self.processes[module_name].new_messages = False
         return log
 
     def get_module_log(self, module_name):
@@ -129,8 +130,6 @@ class ModulesHandler:
                 res.append(formatted_lines[0])
                 res.extend(formatted_lines[3:])
                 msg = '\r\n'.join(res)
-                print("\r\n")
-                print(msg)
 
     def get_modules_info(self, names):
         """Gets info about given modules

@@ -1,141 +1,104 @@
-<!DOCTYPE html>
+
 <html>
-<head>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-  <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-  <meta charset="UTF-8">
-  <title>EaST UI</title>
-
-  <script
-    id="sap-ui-bootstrap"
-    src="resources/sap-ui-core.js"
-    data-sap-ui-theme="sap_bluecrystal"
-    data-sap-ui-libs="sap.ui.commons, sap.m"
-    data-sap-ui-xx-bindingSyntax="complex"
-    data-sap-ui-resourceroots='{
-            "mvc": "./mvc/"
-         }' >
-  </script>
-    <script src="resources/sugar.min.js"></script>
-    <script src="guiCommands.js" ></script>
-    <script src="serverCommands.js"></script>
-    <script src="WebsocketHandler.js"></script>
-    <script src="customControls.js"></script>
-    <script src="messagesController.js"></script>
-    <script src="resources/codemirror.js"></script>
-    <script src="resources/mode/python/python.js"></script>
-    <link rel="stylesheet" href="resources/codemirror.css">
-    <style>
-        .CodeMirror {
-            height: 100%;
-        }
-        .moduleInfoTextView{
-            background-color: white;
-        }
-        .moduleFailed{
-            background-color: red !important;            
-        }
-        .moduleSucceeded{
-            background-color: #379E00 !important;            
-        }
-        .sapUiPanelTitle{
-            text-align: center;
-        }
-        .sapMITBText {
-          background-color: #363E43;
-          color: white !important;
-          text-shadow: none;
-        }
-        .msgItem {
-            font-size: medium;
-            width: auto;
-            opacity: 0.7;
-            padding: 10px;
-            border: 1px solid black;
-            min-width: 300px;
-            border-radius: 5px;
-        }
-
-        .tabFilterCloseBtn{
-          position: relative;
-          bottom: 7px;
-          background: none;
-          border: 1px solid white;
-          padding: 0px !important;
-          color: white;
-          width: 15px;
-          left: 5px;
-          margin: 0px 5px 0px;
-          font-size: 15px;
-          font-weight: bold;
-        }
-        .listenerLabel {
-          width: 8px;
-          height: 8px;
-          bottom: 3px;
-          right: 5px;
-          display: inline-block;
-          position: relative;
-          background-color: #363E43;
-          border-radius: 50%;
-          border: 2px solid white;
-          margin: 0px 5px 0px 0px;
-        }
-    </style>
-  <script>
-
-      var mainController = sap.ui.controller("mvc.Main");
-      var mainView = sap.ui.view({
-          type: sap.ui.core.mvc.ViewType.JS,
-          viewName: "mvc.Main",
-          controller: mainController
-      });
-      mainView.setHeight("100%");
-
-
-      var runDialogController = sap.ui.controller("mvc.RunDialog");
-      var runDialogView = sap.ui.view({
-          type: sap.ui.core.mvc.ViewType.JS,
-          viewName: "mvc.RunDialog",
-          controller: runDialogController
-      });
-
-      var codeEditorDialogController = sap.ui.controller("mvc.CodeEditor");
-      var codeEditorDialogView = sap.ui.view({
-          type: sap.ui.core.mvc.ViewType.JS,
-          viewName: "mvc.CodeEditor",
-          controller: codeEditorDialogController
-      });
-
-      mainView.placeAt("content");
-      $( document ).ready(function() {
-          guiCommandsHandler = new GuiCommandsHandler();
-          serverCommandsHandler = new ServerCommandsHandler();
-          websocketHandler = new WebsocketHandler();
-          modulesTabs = {};
-      });
-      messageController = new MessagesController();
-
-      var showMessageBox = function(msg) {
-          sap.m.MessageToast.show(msg, {
-              my: "center center",
-              at: "center center",
-              duration: 1000
-          });
-      }
-
-      function bindEvent(event_type, callback) {
-          $(document).unbind(event_type);
-          $(document).on(event_type, callback);
-      }
-
-      function doSend(message)
-      {
-          websocketHandler.doSend(message);
-      }
-  </script>
-</head>
-<body class="sapUiBody" role="application" style="height: 100vh">
-    <div id="content" style="height: 100vh"></div>
-</body>
+  <head>
+    <meta charset="utf-8"/>
+    <title>EaST FRAMEWORK</title>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/lodash.min.js"></script>
+    <script src="js/rsvp.js"></script>
+    <script src="js/metro.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/toastr.min.js"></script>
+    <script src="js/vue.min.js"></script>
+    <script src="js/codemirror.js"></script>
+    <script src="mode/python/python.js"></script>
+    <script src="js/guiCommands.js"></script>
+    <script src="js/serverCommands.js"></script>
+    <script src="js/ws.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/metro.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/metro-schemes.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/metro-colors.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/metro-icons.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/metro-rtl.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/toastr.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/codemirror.css"/>
+    <link rel="stylesheet" type="text/css" href="css/main.css"/>
+  </head>
+  <body style="position: absolute; height: 100vh; width: 100vw">
+    <div id="editorDialog">
+      <re-modal :show.sync="show" @ok="save" :large="true" :okText="'Saffffve'">
+        <textarea id="editor"></textarea>
+        <div slot="header" class="text-center">
+          <h4>Edit {{title}}</h4>
+        </div>
+      </re-modal>
+    </div>
+    <div id="optionsDialog">
+      <re-modal :show.sync="show" @ok="ok" okText="Run">       
+        <table>
+          <tr>
+            <td>
+              <label>Use listener:</label>
+            </td>
+            <td>
+              <input type="checkbox" v-model="useListener"/>
+            </td>
+          </tr>
+          <tr v-for="option in options">
+            <td> 
+              <label>{{option.option}}:</label>
+            </td>
+            <td>
+              <input v-show="option.value.type == 'int'" type="number" v-model="option.value.value" class="form-control"/>
+              <input v-show="option.value.type == 'string'" type="" v-model="option.value.value" class="form-control"/>
+              <input v-show="option.value.type == 'bool'" type="checkbox" v-model="option.value.value" class="form-control"/>
+              <select v-show="option.value.type == 'list'" v-model="option.value.selected" class="form-control">
+                <option v-for="opt in option.value.options" :selected="opt == option.value.selected">{{opt}}</option>
+              </select>
+            </td>
+          </tr>
+        </table>
+        <div slot="header" class="text-center">
+          <h4>{{moduleName}}</h4>
+        </div>
+      </re-modal>
+    </div>
+    <div id="imagePopup">
+      <re-modal :show.sync="show" :full="true"><img :src="image || '/'"/>
+        <div slot="header" class="text-center">
+          <h4>Image</h4>
+        </div>
+        <div slot="footer">
+          <button type="button" :class="cancelClass" @click="show=false" class="btn btn-default">Close</button>
+        </div>
+      </re-modal>
+    </div>
+    <div id="mainVue">
+      <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+          <div class="navbar-header"><a href="#" class="navbar-brand">EaST Framework {{ version }}</a></div>
+          <ul class="navbar-form navbar-right">
+            <div class="form-group">
+              <label class="fg-white">Target:</label>
+              <input placeholder="127.0.0.1:80" v-model="target" class="form-control"/>
+            </div>
+          </ul>
+        </div>
+      </nav>
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-4">
+            <tree-view :model.sync="modules" class="fg-white left-panel"></tree-view>
+            <re-module-info :module.sync="selectedModule" class="left-panel"></re-module-info>
+          </div>
+          <div class="col-md-8">
+            <tab-view :tabs.sync="tabs"> </tab-view>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>

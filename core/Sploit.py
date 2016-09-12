@@ -5,6 +5,7 @@ import sys
 import json
 import logging
 import socket
+import base64
 
 #for random string
 from random import choice
@@ -88,6 +89,25 @@ class Sploit:
         """
         return
 
+    def logImage(self, image):
+        """Sends image to GUI's log window
+        :param image: (Stream)
+        :return:
+        Usage:
+        1)    with open('example.jpg', 'rb') as f:
+                  image = f.read()
+                  self.log(image)
+        2)    image = urllib2.urlopen('http://blablabla/image.jpg').read()
+              self.log(image)
+        """
+        image = base64.b64encode(image)
+        try:
+            self.send_message(image, type="image")
+        except Exception as e:
+            self.logger.exception(e)
+        return
+
+
     def log(self, message='', inline=False, replace=False):
         """
             This function provides necessary routines
@@ -150,10 +170,10 @@ class Sploit:
         self.log("wrote to %s" % filepath)
         return 1
 
-    def send_message(self, message, is_successful=None, inline=False, replace=False):
+    def send_message(self, message, is_successful=None, inline=False, replace=False, type="text"):
         self.logger.debug(message)
         args = dict(pid=self.pid, module_name=self.name, message=str(message).decode("cp1251").encode("utf-8"),
-                    state=is_successful, inline=inline, replace=replace)
+                    state=is_successful, inline=inline, replace=replace, type=type)
         req = dict(command="message", args=args)
         self.connection.send(json.dumps(req))
         # waiting for response

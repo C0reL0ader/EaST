@@ -1,0 +1,125 @@
+html
+  head
+    meta(charset="utf-8")
+    title EaST FRAMEWORK
+    script(src="js/jquery.min.js")
+    script(src="js/lodash.min.js")
+    script(src="js/rsvp.js")
+    script(src="js/metro.min.js")
+    script(src="js/bootstrap.min.js")
+    script(src="js/toastr.min.js")
+    script(src="js/vue.min.js")
+    script(src="js/codemirror.js")
+    script(src="mode/python/python.js")
+    
+    script(src="js/guiCommands.js")
+    script(src="js/serverCommands.js")
+    script(src="js/ws.js")
+    script(src="js/components.js")
+    script(src="js/main.js")
+    link(rel="stylesheet", type="text/css", href="css/bootstrap.min.css")
+    link(rel="stylesheet", type="text/css", href="css/metro.min.css")
+    link(rel="stylesheet", type="text/css", href="css/metro-schemes.min.css")
+    link(rel="stylesheet", type="text/css", href="css/metro-colors.min.css")
+    link(rel="stylesheet", type="text/css", href="css/metro-icons.min.css")
+    link(rel="stylesheet", type="text/css", href="css/metro-rtl.min.css")
+    link(rel="stylesheet", type="text/css", href="css/toastr.min.css")
+    link(rel="stylesheet", type="text/css", href="css/codemirror.css")
+    link(rel="stylesheet", type="text/css", href="css/main.css")
+
+  body(style="position: absolute; height: 100vh; width: 100vw")
+    #editorDialog
+      re-modal(:show.sync="show", @ok="save", :large="true", :okText="'Saffffve'")
+        textarea#editor
+        div(slot="header").text-center
+          h4 Edit {{title}}
+    #optionsDialog
+      re-modal(:show.sync="show", @ok="ok", okText="Run")        
+        table
+          tr
+            td
+              label Use listener:
+            td
+              input(type="checkbox", v-model="useListener")
+          tr(v-for="option in options")
+            td 
+              label {{option.option}}:
+            td
+              input.form-control(v-show="option.value.type == 'int'",type="number", v-model="option.value.value")
+              input.form-control(v-show="option.value.type == 'string'",type="", v-model="option.value.value")
+              input.form-control(v-show="option.value.type == 'bool'",type="checkbox", v-model="option.value.value")
+              select.form-control(v-show="option.value.type == 'list'", v-model="option.value.selected")
+                option(v-for="opt in option.value.options", :selected="opt == option.value.selected") {{opt}}
+        div(slot="header").text-center
+          h4 {{moduleName}}
+
+    #imagePopup
+      re-modal(:show.sync="show", :full='true')
+        img(:src="image || '/'")
+        div(slot="header").text-center
+          h4 Image
+        div(slot="footer")
+          button.btn.btn-default(type="button", :class="cancelClass", @click="show=false") Close
+
+    #mainVue
+      nav.navbar.navbar-inverse
+        .container-fluid
+          .navbar-header
+            a.navbar-brand(href="#") EaST Framework {{ version }}
+          ul.navbar-form.navbar-right
+            .form-group
+              label.fg-white Target:
+              input.form-control(placeholder="127.0.0.1:80", v-model="target")
+      .container-fluid
+        .row
+          .col-md-4
+            tree-view(:model.sync="modules").fg-white.left-panel
+            re-module-info.left-panel(:module.sync="selectedModule")
+          .col-md-8
+            tab-view(:tabs.sync="tabs") 
+
+    //- .row
+    //-   ul.col-md-4
+    //-     .panel.panel-primary.tree-widget#tree
+    //-       .panel-heading.text-center
+    //-         h4 Modules
+    //-         table
+    //-           tr
+    //-             td          
+    //-               button.btn.btn-default(title="Run selected module" @click="runSelectedModule()")
+    //-                 i.fa.fa-play
+    //-             td          
+    //-               button.btn.btn-default(title="Edit selected module" @click="editSelectedModule()")
+    //-                 i.fa.fa-edit
+    //-       .panel-body(style="height:70%;")
+    //-         tree-view(:model="treeData")
+
+    //-     .panel.panel-primary.info-widget#info
+    //-       .panel-heading.text-center
+    //-         h4 Info
+    //-       .panel-body.scrollable-panel
+    //-         b Module name: 
+    //-         |  {{name}}
+    //-         br
+    //-         b Description: 
+    //-         |  {{description}}
+    //-         br
+    //-         b Vendor: 
+    //-         a(href="{{vendor}}" target="_blank")  {{vendor}}
+    //-         br
+    //-         b CVE: 
+    //-         |  {{cve}}
+    //-         br
+    //-         b Download link:
+    //-         br
+    //-         a(href="{{downloadLink}}" target="_blank") {{downloadLink}}
+    //-         br
+    //-         b Links:
+    //-         li(v-for="link in links" v-show="link")
+    //-           a(href="{{link}}" target="_blank") {{link}}                
+    //-         br
+    //-         b Notes: 
+    //-         pre.pre-scrollable {{notes}}
+    //-   ul.col-md-8#tabs
+    //-     tab-view(:tabs="tabsData")
+

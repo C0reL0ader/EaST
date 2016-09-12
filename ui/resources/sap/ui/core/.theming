@@ -1,6 +1,0 @@
-{
-  "sEntity" : "Library",
-  "sId" : "sap/ui/core",
-  "sVersion" : "1.28.10",
-  "aFiles" : [ "library", "global" ]
-}

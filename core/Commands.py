@@ -168,8 +168,9 @@ class Commands:
         """
         inline = args.get("inline", False)
         replace = args.get("replace", False)
+        type = args.get('type', 'text')
         if "message" in args.keys() and "state" in args.keys() and "pid" in args.keys():
-            module = self.modules_handler.add(args["pid"], args["message"], args["state"], inline, replace)
+            module = self.modules_handler.add(args["pid"], args["message"], args["state"], inline, replace, type)
             message = {"command": "on_module_message",
                        "args": {
                            "module_name": module.module_name,

@@ -1,6 +1,0 @@
-/*!
- * SAP UI development toolkit for HTML5 (SAPUI5/OpenUI5)
- * (c) Copyright 2009-2015 SAP SE or an SAP affiliate company.
- * Licensed under the Apache License, Version 2.0 - see LICENSE.txt.
- */
-sap.ui.define(['jquery.sap.global'],function(q){"use strict";var M={};M.render=function(r,m){var t=m.getTooltip_AsString();var l=m._getLocaleData();var I=m.getId();var a=[];var b=[];if(m._bLongMonth||!m._bNamesLengthChecked){a=l.getMonthsStandAlone("wide");}else{a=l.getMonthsStandAlone("abbreviated");b=l.getMonthsStandAlone("wide");}var c=m.getMonth();r.write("<div");r.writeControlData(m);r.addClass("sapUiCalMonthPicker");r.writeClasses();if(t){r.writeAttributeEscaped('title',t);}r.writeAccessibilityState(m,{role:"grid",readonly:"true",multiselectable:"false"});r.write(">");var A;for(var i=0;i<12;i++){A={role:"gridcell"};if(!m._bLongMonth&&m._bNamesLengthChecked){A["label"]=b[i];}if(i==0||i%m._iColumns==0){r.write("<div");r.writeAccessibilityState(null,{role:"row"});r.write(">");}r.write("<div");r.writeAttribute("id",I+"-m"+i);r.addClass("sapUiCalMonth");if(i==c){r.addClass("sapUiCalMonthSel");}r.writeAttribute("tabindex","-1");r.writeClasses();r.writeAccessibilityState(null,A);r.write(">");r.write(a[i]);r.write("</div>");if((i+1)%m._iColumns==0){r.write("</div>");}}r.write("</div>");};return M;},true);
