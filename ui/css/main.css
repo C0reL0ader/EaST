@@ -29,7 +29,7 @@
 }
 .modal-header {
     background-color: #222;
-    color: white;
+    color: #ccc;
 }
 
 
@@ -154,5 +154,19 @@ pre {
 
 .treeView li {
     white-space: nowrap;
+}
+/*.treeView li .leaf:hover {
+    border-bottom: 1px solid rgba(1,1,1,0.6);
+}*/
+.nav-tabs>li>a {
+    margin-right: 0px;
+}
+.nav-tabs>li {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+.nav-tabs>li.active {
+    box-shadow: 1px 2px 10px 2px black;
+    z-index: 1;
 }
 

@@ -16,7 +16,7 @@ sys.path.append("./core/helpers/java")
 sys.path.append("./core/helpers/archieve")
 sys.path.append("./shellcodes")
 
-VERSION = "1.0.0 RC"
+VERSION = "1.0.0"
 
 class FrameworkStarter:
     def __init__(self, host="localhost", ws_port=49999, port=80):

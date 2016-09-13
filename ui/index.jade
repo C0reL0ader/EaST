@@ -1,7 +1,7 @@
 html
   head
     meta(charset="utf-8")
-    title EaST FRAMEWORK
+    title EaST Framework
     script(src="js/jquery.min.js")
     script(src="js/lodash.min.js")
     script(src="js/rsvp.js")
@@ -74,7 +74,7 @@ html
         .row
           .col-md-4
             tree-view(:model.sync="modules").fg-white
-            re-module-info.left-panel(:module.sync="selectedModule")
+            re-module-info(:module.sync="selectedModule")
           .col-md-8
             tab-view(:tabs.sync="tabs") 
 

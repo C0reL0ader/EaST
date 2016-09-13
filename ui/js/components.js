@@ -240,6 +240,9 @@ Vue.component('tab-view', {
         this.chooseTab(index);
       }
       this.$dispatch('onTabClose', current_tab)
+      if (!this.tabs.length) {
+        setDefaultInfo();
+      }
     },
     chooseTab: function(index) {
       if(!this.tabs.length)
@@ -248,6 +251,7 @@ Vue.component('tab-view', {
         tab.active = false;
       });
       this.tabs[index].active = true;
+      showTabInfo(this.tabs[index]);
     },
     send: function(index) {
       var tab = this.tabs[index];
@@ -431,7 +435,7 @@ var moduleInfo = function(){/*
       <div class="panel-heading modal-header">
         <b>Module info:</b>
       </div>
-      <div class="panel-body">
+      <div class="panel-body left-panel">
         <b>Description:</b> {{module.DESCRIPTION || 'N/A'}} <br>
         <b>Vendor:</b> 
         <a v-show="module.VENDOR" href="{{module.VENDOR}}" target="_blank">{{module.VENDOR}}</a>

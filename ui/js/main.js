@@ -61,6 +61,7 @@ $(document).ready(function() {
                 module.content.push(args.message);
                 if (args.state != null) {
                     module.state = args.state;
+                    showTabInfo(module);
                 }
                 if (index != -1) {
                     var selector = '.tab-content #tab_item_' + index + ' .logView';
@@ -81,12 +82,15 @@ $(document).ready(function() {
                 var index = _.indexOf(this.tabs, module);
                 module.listenerMessages += '\n' + listenerMessage;
                 if (listenerState == 1 && module.listenerState != 1){
+                    module.listenerState = listenerState;
                     toastr.success("Shell successfully connected to " + args.module_name);
+                    showTabInfo(module);
                 }
                 if (listenerState == 2  && module.listenerState != 2){
+                    module.listenerState = listenerState;
                     toastr.warning("Listener disconnected from " + args.module_name);
-                }
-                module.listenerState = listenerState;
+                    showTabInfo(module);
+                }                
                 var selector = '.tab-content #tab_item_' + index + ' .pre-scrollable';
                 Vue.nextTick(function () {
                    $(selector).scrollTop($(selector)[0].scrollHeight);
@@ -207,3 +211,47 @@ $(document).ready(function() {
         }
     })
 });
+
+function changeFavicon(icon) {
+  var $favicon = document.querySelector('link[rel="icon"]')
+  // If a <link rel="icon"> element already exists,
+  // change its href to the given link.
+  if ($favicon !== null) {
+    $favicon.href = "/icons/" + icon
+  // Otherwise, create a new element and append it to <head>.
+  } else {
+    $favicon = document.createElement("link")
+    $favicon.id = 'dynamic-favicon';
+    $favicon.rel = "icon"
+    $favicon.href = "/icons/" + icon
+    document.head.appendChild($favicon)
+  }
+}
+
+function setDefaultInfo() {
+    changeFavicon('transparent.ico');
+    document.title = "EaST Framework";
+}
+
+function showTabInfo(tab) {
+    if (tab.useListener) {
+        if (tab.listenerState == 0) {
+            changeFavicon('listener-enabled.ico');
+        } else if (tab.listenerState == 1) {
+            changeFavicon('listener-connected.ico');
+        } else if (tab.listenerState == 2) {
+            changeFavicon('listener-disconnected.ico');
+        }
+    } else {
+        changeFavicon('transparent.ico');
+    }
+    var title = tab.title
+    if (tab.state == true) {
+        title += "(SUCCEEDED)";
+    } else if (tab.state == false) {
+        title += "(FAILED)"
+    } else {
+        title += "(RUNNING)"
+    }
+    document.title = title;
+}

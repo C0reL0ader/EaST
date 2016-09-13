@@ -63,13 +63,14 @@ WebsocketHandler.prototype = {
                                 message.message =  'data:image/jpg;base64,' + message.message;
                             return message;
                         }),
-                        active: true, 
+                        active: false, 
                         useListener: _.size(value.listener) > 0,
                         listenerMessages: value.listener ? value.listener.message : "",
                         listenerState: value.listener ? value.listener.connected : 0,
                         state: value.state
                     }
                 });
+                tabsData[0].active = true;
                 _.extend(commonData, {tabs: tabsData});
                 // console.log(args);
             })
