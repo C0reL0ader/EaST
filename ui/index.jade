@@ -65,7 +65,7 @@ html
       nav.navbar.navbar-inverse
         .container-fluid
           .navbar-header
-            a.navbar-brand(href="#") EaST Framework {{ version }}
+            a.navbar-brand(href="#", :class="{'fg-red': !serverEnabled}") EaST Framework {{ version }}
           ul.navbar-form.navbar-right
             .form-group
               label.fg-white Target:

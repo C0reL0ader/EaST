@@ -7,7 +7,8 @@ commonData = {
     modules: [],
     tabs: [],
     target: "",
-    selectedModule: {}
+    selectedModule: {},
+    serverEnabled: true
 }
 
 var WebsocketHandler= function() {
@@ -21,6 +22,7 @@ var WebsocketHandler= function() {
 
 WebsocketHandler.prototype = {
     initData: function (evt) {
+        commonData.serverEnabled = true;
         var hello = function() {
             var promise = new RSVP.Promise(function(resolve, reject) {
                 guiCommandsHandler.hello(function(res) {
@@ -81,6 +83,8 @@ WebsocketHandler.prototype = {
     },
 
     onClose: function(evt) {
+        commonData.serverEnabled = false;
+        toastr.error('Websocket server is unavailable');
         console.log("Close")
     },
 
@@ -90,6 +94,7 @@ WebsocketHandler.prototype = {
     },
 
     onError: function(evt) {
+        commonData.serverEnabled = false;
         websocketHandler.websocket.close();
     },
 

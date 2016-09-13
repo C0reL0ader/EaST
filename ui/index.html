@@ -79,7 +79,7 @@
     <div id="mainVue">
       <nav class="navbar navbar-inverse">
         <div class="container-fluid">
-          <div class="navbar-header"><a href="#" class="navbar-brand">EaST Framework {{ version }}</a></div>
+          <div class="navbar-header"><a href="#" :class="{'fg-red': !serverEnabled}" class="navbar-brand">EaST Framework {{ version }}</a></div>
           <ul class="navbar-form navbar-right">
             <div class="form-group">
               <label class="fg-white">Target:</label>
