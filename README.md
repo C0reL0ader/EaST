@@ -33,4 +33,3 @@ Tests for Windows and Linux. Should function everywhere where Python is installe
 * Exploits and Security Tools Framework [website](http://eastfw.com/).
 * [EaST Exploits DB](http://eastexploits.com/)
 * [EaST exploits developer guide](https://github.com/C0reL0ader/EaST/wiki)
-* [New EaST lightweight GUI](https://github.com/C0reL0ader/EaST-lightweight-GUI)
