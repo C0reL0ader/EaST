@@ -7,7 +7,7 @@ import logging
 import socket
 import base64
 
-#for random string
+# for random string
 from random import choice
 from string import ascii_letters
 from string import digits
@@ -37,7 +37,7 @@ class Sploit:
     """
         This is the base class for all exploits in the tool.
     """
-    def __init__(self, logfile="", debugfile="", logger=None):
+    def __init__(self, logfile="", debugfile="", logger=None, options={}):
         # Logger will need in the future to log to file
         """
             Initialization routines.
@@ -57,6 +57,16 @@ class Sploit:
                                             sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),))
         self.hello()
         self.run = _deco(self, self.run)
+        if bool(options):
+            self.create_args(options)
+        return
+
+    def create_args(self, options={}):
+        self.args = self.args(options)
+        for o in options:
+            var = o.lower().replace(" ", "_")
+            var_val = self.args.get(o, options[o])
+            setattr(self, var, var_val)
         return
 
     def args(self, options={}):
@@ -107,7 +117,6 @@ class Sploit:
             self.logger.exception(e)
         return
 
-
     def log(self, message='', inline=False, replace=False):
         """
             This function provides necessary routines
@@ -134,7 +143,6 @@ class Sploit:
             msg = "Module %s was failed" % self.name
         self.send_message(msg, is_successful)
         sys.exit()
-
 
     def writefile(self, filedata, filename=""):
         """
