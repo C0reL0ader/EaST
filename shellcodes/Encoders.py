@@ -328,6 +328,7 @@ class JumpCallXorEncoder(XorEncoder):
     def _get_xor_key_position(self):
         return JumpCallXorEncoder.XOR_KEY_POSITION
 
+
 class CodeEncoders:
     """
         Class with Encoders
@@ -340,6 +341,8 @@ class CodeEncoders:
         self.OS_TARGET_ARCH = OS_TARGET_ARCH
         self.BADCHARS = BADCHARS
         self.TMP_DIR = 'tmp'
+        self.step = 0
+        self.max_steps = 20
         return
 
     def encode_shellcode(self, _byte_array, encoder_type, debug=0):
@@ -366,23 +369,19 @@ class CodeEncoders:
         if not self.BADCHARS:
             print "You must specify some params"
             return None
-
         for k in self.BADCHARS:
             # Ooops, BadChar found :( Do XOR stuff again with a new random value
             # This could run into an infinite loop in some cases
-            if payload.find(k) >= 0:
+            if k in payload:
                 payload = self.xor_bytes(orig_array)
-
         return payload
 
     def xor_bytes(self, byte_array):
-
         # Randomize first byte
         rnd = randint(1, 255)
         xor1 = (rnd ^ byte_array[0])
         xor2 = (xor1 ^ byte_array[1])
         xor3 = (xor2 ^ byte_array[2])
-
         xor_array = bytearray()
         xor_array.append(rnd)
         xor_array.append(xor1)
@@ -453,6 +452,7 @@ get_shellcode:
         return encoded_shellcode
 
     def xor_encoder(self, _byte_arr, debug=0):
+        self.step += 1
         """
             Simple xor encoder
             https://www.rcesecurity.com/2015/01/slae-custom-rbix-shellcode-encoder-decoder/
@@ -472,8 +472,8 @@ get_shellcode:
         for i in range(0, len(shellcode), 3):
             tmp_block = bytearray()
             tmp_block.append(shellcode[i])
-            tmp_block.append(shellcode[i+1])
-            tmp_block.append(shellcode[i+2])
+            tmp_block.append(shellcode[i + 1])
+            tmp_block.append(shellcode[i + 2])
 
             # Do the RND-Insertion and chained XORs
             tmp = self.xor_bytes(tmp_block)
@@ -481,12 +481,19 @@ get_shellcode:
             # Some formatting things for easier use in NASM :)
             for y in tmp:
                 if len(str(hex(y))) == 3:
-                    final += str(hex(y)[:2]) + "0" + str(hex(y)[2:])+","
+                    final += str(hex(y)[:2]) + "0" + str(hex(y)[2:]) + ","
                 else:
-                    final += hex(y)+","
+                    final += hex(y) + ","
 
         final = final[:-1]
         encoded_shellcode = self.xor_decoder(final, debug)
+        for i in self.BADCHARS:
+            if i in encoded_shellcode:
+                print("Founding BADHCARS")
+                if self.step < self.max_steps:
+                    return self.xor_encoder(_byte_arr, debug)
+                else:
+                    return None
         return encoded_shellcode
 
     def rot_13_decoder(self, _shellcode, debug=0):
