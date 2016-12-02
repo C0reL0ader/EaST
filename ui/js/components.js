@@ -33,11 +33,6 @@ Vue.component('tree-node', {
     isFolder: function () {
       return !this.model.isFile;
     },
-    filterNode: function() {
-      if (this.isFolder && this.entry_filter != '')
-        return this.$children.length;
-      return true;
-    }
   },
   methods: {
     select: function() {
@@ -59,18 +54,6 @@ Vue.component('tree-node', {
         this.select();
       }
     },
-    changeType: function () {
-      if (!this.isFolder) {
-        Vue.set(this.model, 'children', [])
-        this.addChild()
-        this.open = true
-      }
-    },
-    addChild: function () {
-      this.model.children.push({
-        name: 'new stuff'
-      })
-    }
   }
 })
 
@@ -114,24 +97,32 @@ Vue.component('tree-view', {
               if (child.$children && child.$children.length) {
                 return walk(child);
               }
-              if (child.model.isFile && 
-                          (child.model.NAME.indexOf(self.search) < 0 &&
-                           child.model.DESCRIPTION.indexOf(self.search) < 0 && 
-                           child.model.NOTES.indexOf(self.search) < 0
-                          )) {
-                child.$data.showNode = false;
-                filteredCount += 1;
-              }
-              else {
+              var toSearch = self.search.toLowerCase();
+              var model = child.model;
+              if (model.isFile) {
+                if (model.NAME && model.NAME.toLowerCase().indexOf(toSearch) !== -1 ||
+                    model.DESCRIPTION && model.DESCRIPTION.toLowerCase().indexOf(toSearch) !== -1 ||
+                    model.VENDOR && model.VENDOR.toLowerCase().indexOf(toSearch) !== -1 ||
+                    model.NOTES && model.NOTES.toLowerCase().indexOf(toSearch) !== -1 ||
+                    model['CVE Name'] && model['CVE Name'].toLowerCase().indexOf(toSearch) !== -1) {
+                  child.$data.showNode = true;
+                } else {
+                  child.$data.showNode = false;
+                  filteredCount += 1;
+                }
+              } else {
                 child.$data.showNode = true;
               }
-            })
+            });
             if (filteredCount == node.$children.length) {
               node.$data.showNode = false;
             } 
             else {
               node.$data.showNode = true;
               node.$data.open = true;
+            }
+            if (!_.filter(node.$children, 'showNode').length) {
+              node.$data.showNode = false;
             }
           }
         }
@@ -443,13 +434,13 @@ var moduleInfo = function(){/*
         <br>
         <b>CVE:</b> {{module['CVE Name'] || 'N/A'}} <br>
         <b>Links:</b>
-        <ol v-show="module.LINKS.length">
-          <li v-for="link in module.LINKS">
+        <ol v-if="links.length">
+          <li v-for="link in links">
             <a href="{{link}}">{{link}}</a>
           </li>
         </ol>        
-        <div v-show="!module.LINKS.length" :style="displayInline">N/A</div>
-        <br>
+        <div v-else :style="displayInline">N/A</div>
+        <br v-show="!links.length">
         <b>Download link:</b> 
         <a v-show="module.DOWNLOAD_LINK" href="{{module.DOWNLOAD_LINK}}" target="_blank">{{module.DOWNLOAD_LINK}}</a>
         <div v-show="!module.DOWNLOAD_LINK" :style="displayInline">N/A</div>
@@ -469,11 +460,16 @@ Vue.component('re-module-info', {
     displayInline: function() {
       return 'display: inline;'
     },
-    isArray: function() {
-      return _.isArray(module.LINKS);
-    },
-    isString: function() {
-      return _.isString(module.LINKS);
+    links: function () {
+      var links = this.module.LINKS;
+      if (links && links.length) {
+        if (_.isString(links)) {
+          links = [links];
+        }
+      }
+      return _.filter(links, function(link) {
+        return link && link.length;
+      })
     }
   }
 })

@@ -133,7 +133,6 @@ pre {
     border: 1px solid grey;
     border-radius: 10px;
     box-shadow: 3px 3px 10px;
-    bac
 }
 
 .tab-widget .panel-body {
@@ -168,5 +167,9 @@ pre {
 .nav-tabs>li.active {
     box-shadow: 1px 2px 10px 2px black;
     z-index: 1;
+}
+
+[v-cloak] {
+  display: none;
 }
 

@@ -28,7 +28,7 @@
     <link rel="stylesheet" type="text/css" href="css/main.css"/>
   </head>
   <body style="position: absolute; height: 100vh; width: 100vw">
-    <div id="editorDialog">
+    <div id="editorDialog" v-cloak>
       <re-modal :show.sync="show" @ok="save" :large="true" :okText="'Saffffve'">
         <textarea id="editor"></textarea>
         <div slot="header" class="text-center">
@@ -36,7 +36,7 @@
         </div>
       </re-modal>
     </div>
-    <div id="optionsDialog">
+    <div id="optionsDialog" v-cloak>
       <re-modal :show.sync="show" @ok="ok" okText="Run">       
         <table>
           <tr>
@@ -66,7 +66,7 @@
         </div>
       </re-modal>
     </div>
-    <div id="imagePopup">
+    <div id="imagePopup" v-cloak>
       <re-modal :show.sync="show" :full="true"><img :src="image || '/'"/>
         <div slot="header" class="text-center">
           <h4>Image</h4>
@@ -79,7 +79,7 @@
     <div id="mainVue">
       <nav class="navbar navbar-inverse">
         <div class="container-fluid">
-          <div class="navbar-header"><a href="#" :class="{'fg-red': !serverEnabled}" class="navbar-brand">EaST Framework {{ version }}</a></div>
+          <div v-cloak class="navbar-header"><a href="#" :class="{'fg-red': !serverEnabled}" class="navbar-brand">EaST Framework {{ version }}</a></div>
           <ul class="navbar-form navbar-right">
             <div class="form-group">
               <label class="fg-white">Target:</label>

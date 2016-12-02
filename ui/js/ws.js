@@ -3,7 +3,7 @@
 //     websocketHandler.websocket.close();
 // };
 commonData = {
-    version: '1.0.0',
+    version: '',
     modules: [],
     tabs: [],
     target: "",
