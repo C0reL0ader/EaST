@@ -83,19 +83,30 @@ class Commands:
             return
         module_name = self.available_modules[args["module_name"]]
         use_listener = args["use_listener"]
+        use_custom_port = args.get("use_custom_port", False)
+        custom_port = int(args.get("custom_port", 0))
         options = args["options"]
         new_module_name = self.modules_handler.make_unique_name(args["module_name"])
 
-        # After getting unique module name send it to gui
-        data = dict(command="start_module",
-                    args=dict(module_name=new_module_name, listener=use_listener))
-        client.send_message(json.dumps(data))
-
         if use_listener:
             exclude_ports = self.listener_handler.get_busy_ports_list()
-            free_socket_data = self.port_scanner.scan(search_for='closed', first_match=True, nthreads=10, exclude=exclude_ports)
-            if free_socket_data:
-                listener_options = dict(PORT=free_socket_data[0][1])
+            if use_custom_port and custom_port:
+                if custom_port in exclude_ports or self.port_scanner.check_port_state(custom_port):
+                    error = dict(error=True, message='Lister port %d is busy. Try another port for listener' % custom_port)
+                    data = dict(command="start_module", args=error)
+                    client.send_message(json.dumps(data))
+                    return
+                listener_options = dict(PORT=custom_port)
+            else:
+                free_socket_data = self.port_scanner.scan(search_for='closed', first_match=True, nthreads=10, exclude=exclude_ports)
+                if free_socket_data:
+                    listener_options = dict(PORT=free_socket_data[0][1])
+
+            # After getting unique module name send it to gui
+            data = dict(command="start_module",
+                        args=dict(module_name=new_module_name, listener=use_listener))
+            client.send_message(json.dumps(data))
+
             listener_process = subprocess.Popen([sys.executable, LISTENER], shell=False, env=os.environ.copy())
             self.listener_handler.addListener(new_module_name, listener_process, listener_options)
             self.server.add_process(listener_process)

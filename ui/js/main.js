@@ -105,8 +105,11 @@ $(document).ready(function() {
             options: [],
             show: false,
             moduleName: {},
-            useListener: false
+            useListener: false,
+            useCustomPort: false,
+            customPort: 4444
         },
+
         methods: {
             showDialog: function(moduleName, options) {
                 var hostPort = commonData.target.split(':');
@@ -131,10 +134,16 @@ $(document).ready(function() {
                 var args = {
                     module_name: this.moduleName,
                     use_listener: this.useListener,
+                    use_custom_port: this.useCustomPort,
+                    custom_port: this.customPort,
                     options: this.options
                 };
                 guiCommandsHandler.startModule(args, function(e) {
                     var args = e.args;
+                    if (args.error) {
+                        toastr.error(args.message, 'Error', {timeOut: 5000});
+                        return;
+                    }
                     var data = {
                         title: args.module_name,
                         content: [{message: 'Starting ' + args.module_name}],
@@ -143,14 +152,24 @@ $(document).ready(function() {
                         listenerMessages: '',
                         listenerState: 0,
                         state: null
-                    }
+                    };
                     mainVue.addTab(data);
-                })             
+                });
                 this.cancel();
             },
 
             cancel: function() {
                 this.show = false;
+            },
+            enableListener: function () {
+              if (!this.useCustomPort) {
+                  this.useListener = true;
+              }
+            },
+            checkCustomPort: function() {
+                if (this.useCustomPort && this.useListener) {
+                    this.useCustomPort = false;
+                }
             }
         }
     })

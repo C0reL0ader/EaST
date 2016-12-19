@@ -37,16 +37,36 @@
       </re-modal>
     </div>
     <div id="optionsDialog" v-cloak>
-      <re-modal :show.sync="show" @ok="ok" okText="Run">       
+      <re-modal :show.sync="show" @ok="ok" okText="Run">
         <table>
           <tr>
             <td>
               <label>Use listener:</label>
             </td>
             <td>
-              <input type="checkbox" v-model="useListener"/>
+              <input type="checkbox" v-model="useListener" @click="checkCustomPort()"/>
             </td>
           </tr>
+          <tr>
+            <td>
+              <label>Use custom listener port:</label>
+            </td>
+            <td>
+              <input type="checkbox" v-model="useCustomPort" @click="enableListener()"/>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label>Listener port:</label>
+            </td>
+            <td>
+              <input type="number" :disabled="!useCustomPort" class="form-control" v-model="customPort"/>
+            </td>
+          </tr>
+
+        </table>
+        <hr>
+        <table>
           <tr v-for="option in options" title="{{option.value.description || ''}}">
             <td> 
               <label>{{option.option}}:</label>

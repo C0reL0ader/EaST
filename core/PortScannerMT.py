@@ -43,6 +43,17 @@ class Scanner:
         self.scanners = []
         self.resp = []
 
+    def check_port_state(self, port):
+        sd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            sd.connect(('127.0.0.1', int(port)))
+            sd.close()
+            return True
+        except socket.error:
+            sd.close()
+            return False
+
+
     def scan(self, search_for='opened',first_match=False, nthreads=1, send_fn=None, exclude=[]):
         """
         @param search_for(string): Search for 'opened', 'closed' or 'all' ports
