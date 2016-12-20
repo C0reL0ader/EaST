@@ -231,10 +231,10 @@ def make_binary_from_obj(o_file, os_target, os_target_arch, debug=0, is_dll=Fals
             binary_type = "-m i386pe"
         if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
             if is_dll:
-                cmd = "%s %s -shared -o %s %s" % (find_app, binary_type, c_exe, o_file)
+                p = Popen([find_app, binary_type, '-shared', '-o', c_exe, o_file])
             else:
-                cmd = "%s %s -o %s %s" % (find_app, binary_type, c_exe, o_file)
-            os.system(cmd)
+                p = Popen([find_app, binary_type, '-o', c_exe, o_file])
+            p.communicate()
 
         if os_target == Constants.OS.WINDOWS:
             if is_dll:
@@ -247,10 +247,10 @@ def make_binary_from_obj(o_file, os_target, os_target_arch, debug=0, is_dll=Fals
         c_exe += ".dll" if is_dll else ".exe"
         if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
             if is_dll:
-                cmd = "%s -shared -o %s %s" % (find_app, c_exe, o_file)
+                p = Popen([find_app, '-shared', '-o', c_exe, o_file])
             else:
-                cmd = "%s -o %s %s" % (find_app, c_exe, o_file)
-            os.system(cmd)
+                p = Popen([find_app, '-o', c_exe, o_file])
+            p.communicate()
 
         if os_target == Constants.OS.LINUX:
             if os.path.exists(linux_name):

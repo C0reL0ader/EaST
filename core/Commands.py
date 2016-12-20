@@ -102,14 +102,15 @@ class Commands:
                 if free_socket_data:
                     listener_options = dict(PORT=free_socket_data[0][1])
 
-            # After getting unique module name send it to gui
-            data = dict(command="start_module",
-                        args=dict(module_name=new_module_name, listener=use_listener))
-            client.send_message(json.dumps(data))
+
 
             listener_process = subprocess.Popen([sys.executable, LISTENER], shell=False, env=os.environ.copy())
             self.listener_handler.addListener(new_module_name, listener_process, listener_options)
             self.server.add_process(listener_process)
+        # After getting unique module name send it to gui
+        data = dict(command="start_module",
+                    args=dict(module_name=new_module_name, listener=use_listener))
+        client.send_message(json.dumps(data))
         process = subprocess.Popen([sys.executable, module_name], shell=False, env=os.environ.copy())
         options = self.options_parser.parse_data(options)
         self.modules_handler.register_process(new_module_name, args["module_name"], process, options)
