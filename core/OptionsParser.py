@@ -21,7 +21,7 @@ class OptionsParser:
 
     def prepare_options(self, options):
         res = OrderedDict()
-        for option in options.keys():
+        for option in options:
             value = options[option]
             ext_options = {}
             # check for extended options

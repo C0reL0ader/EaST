@@ -2,49 +2,61 @@ import os
 import time
 from subprocess import call, Popen, PIPE
 from shutil import rmtree
-from platform import system, architecture
+from platform import system, machine
+import struct
 
 TIMESTAMP = time.strftime('%Y%m%d%H%M%S', time.gmtime())
 OS_SYSTEM = system().upper()
-OS_ARCH = (architecture())[0]
+OS_ARCH = machine()
+
 
 class Constants:
-    SHELLCODES_REL_PATH = '3rdPartyTools/ShellcodesUtils/'
-    TMP_DIR = os.getcwd() + '/tmp'
+    FW_ROOT_PATH = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+    SHELLCODES_DEV_PATH = os.path.join(FW_ROOT_PATH, '3rdPartyTools', 'ShellcodesUtils')
+    TMP_DIR = os.path.join(FW_ROOT_PATH, 'tmp')
+
     class OS:
         WINDOWS = "WINDOWS"
         LINUX = "LINUX"
+
     class OS_ARCH:
         X32 = "32bit"
         X64 = "64bit"
+
     class EncoderType:
         XOR = "xor"
         ALPHANUMERIC = "alphanum"
         ROT_13 = "rot_13"
         FNSTENV_XOR = "fnstenv"
         JUMPCALL_XOR = "jumpcall"
+
     class ShellcodeType:
         JSP = "jsp"
         JAR = "jar"
         PYTHON = "python"
         PHP = "php"
         ASPX = "aspx"
+
     class JavaShellcodeType:
         JSP = "jsp"
         JAR = "jar"
 
+    class ShellcodeConnection:
+        BIND = 'bind'
+        REVERSE = 'reverse'
 
-def search_file(filename, search_path, iterations=3):
+
+def is_os_64bit():
+    return machine().endswith('64')
+
+
+def search_file(filename, search_path):
     """
         Given a search path, find file
     """
-    main_path = os.getcwd()
-    parent_path = os.sep
-    for i in xrange(iterations):
-        filepath = os.path.abspath(main_path + parent_path + search_path + filename)
-        if os.path.exists(filepath):
-            return filepath
-        parent_path += os.pardir + os.sep
+    path = os.path.join(search_path, filename)
+    if os.path.exists(path):
+        return path
     return None
 
 
@@ -69,6 +81,7 @@ def write_file(data, file_ext='', file_name=''):
 
     return file_path
 
+
 def get_objective_code(asm_file, target_arch, debug=0):
     """
         Get objective code (file: *.o)
@@ -79,42 +92,43 @@ def get_objective_code(asm_file, target_arch, debug=0):
     elif target_arch == Constants.OS_ARCH.X64:
         output_format = 'elf64'
     else:
-        print "Format for output objective file is not defined"
+        print ("Format for output objective file is not defined")
         return None
 
     if not asm_file:
-        print "You must specify some params passed to function"
+        print ("You must specify some params passed to function")
         return None
 
     obj_file = (asm_file.split('.'))[0] + ".o"
 
-    app = 'nasm'    # Application that do magic for us
+    app = 'nasm'  # Application that do magic for us
     if OS_SYSTEM == Constants.OS.WINDOWS:
         app += '.exe'
-
-        find_app = search_file("%s" % app, Constants.SHELLCODES_REL_PATH)
+        find_app = search_file("%s" % app, Constants.SHELLCODES_DEV_PATH)
         if find_app:
             if debug:
-                print "app: '%s' found at %s" % (app, find_app)
+                print ("app: '%s' found at %s" % (app, find_app))
         else:
-            print "You must install app: '%s' and maybe edit environment variables path to it" % app
+            print ("You must install app: '%s' and maybe edit environment variables path to it" % app)
             return None
     elif OS_SYSTEM == Constants.OS.LINUX:
         find_app = app
     else:
-        print "Can't understand source os"
+        print ("Can't understand source os")
         return None
 
     command = "%s -f%s -o%s %s" % (find_app, output_format, obj_file, asm_file)
-    print command
+    if debug:
+        print (command)
     res = call([find_app, "-f", output_format, "-o", obj_file, asm_file])
     if res == 0:
         if debug:
-            print "Objective code has been created"
+            print("Objective code has been created")
         return obj_file
     else:
-        print "Something wrong while getting objective code"
+        print ("Something wrong while getting objective code")
         return None
+
 
 def objdump(obj_file, os_target_arch, debug=0):
     """
@@ -123,24 +137,24 @@ def objdump(obj_file, os_target_arch, debug=0):
 
     res = ''
     if not obj_file:
-        print "You must specify some params passed to function"
+        print ("You must specify some params passed to function")
         return None
     else:
         app = 'objdump'
         if OS_SYSTEM == Constants.OS.WINDOWS:
             app += ".exe"
 
-            find_app = search_file("%s" % app, Constants.SHELLCODES_REL_PATH)
+            find_app = search_file("%s" % app, Constants.SHELLCODES_DEV_PATH)
             if find_app:
                 if debug:
-                    print "app: '%s' found at %s" % (app, find_app)
+                    print ("app: '%s' found at %s" % (app, find_app))
             else:
-                print "You must install app: '%s' and maybe edit environment variables path to it" % app
+                print ("You must install app: '%s' and maybe edit environment variables path to it" % app)
                 return None
         elif OS_SYSTEM == Constants.OS.LINUX:
             find_app = app
         else:
-            print "Can't understand source os"
+            print ("Can't understand source os")
             return None
 
         if os_target_arch == Constants.OS_ARCH.X32:
@@ -148,7 +162,7 @@ def objdump(obj_file, os_target_arch, debug=0):
         elif os_target_arch == Constants.OS_ARCH.X64:
             p = Popen(['%s' % find_app, '-d', obj_file, '--disassembler-options=addr64'], stdout=PIPE, stderr=PIPE)
         else:
-            print "OS TARGET ARCH '%s' is not supported" % os_target_arch
+            print ("OS TARGET ARCH '%s' is not supported" % os_target_arch)
             return
 
         (stdoutdata, stderrdata) = p.communicate()
@@ -162,17 +176,16 @@ def objdump(obj_file, os_target_arch, debug=0):
             raise ValueError(stderrdata)
 
     if res and debug:
-        print "Objdump is created"
+        print ("Objdump is created")
 
-    print res
     return res
 
 
 def create_shellcode(asm_code, os_target, os_target_arch, make_exe=0, debug=0, filename="", dll_inj_funcs=[]):
     if os_target == Constants.OS.LINUX:
         dll_inj_funcs = []
-    if OS_ARCH == Constants.OS_ARCH.X32 and os_target_arch == Constants.OS_ARCH.X64:
-        print "ERR: can not create shellcode for this os_target_arch (%s) on os_arch (%s)" % (os_target_arch, OS_ARCH)
+    if not is_os_64bit() and os_target_arch == Constants.OS_ARCH.X64:
+        print ("ERR: can not create shellcode for this os_target_arch (%s) on os_arch (%s)" % (os_target_arch, OS_ARCH))
         return None
     asm_file = write_file(asm_code, '.asm', filename)
     obj_file = get_objective_code(asm_file, os_target_arch, debug)
@@ -181,6 +194,7 @@ def create_shellcode(asm_code, os_target, os_target_arch, make_exe=0, debug=0, f
     if obj_file:
         shellcode = objdump(obj_file, os_target_arch, debug)
         shellcode = shellcode.replace('\\x', '').decode('hex')
+        # shellcode = extract_shell_from_obj(obj_file)
     else:
         return None
     if make_exe:
@@ -188,6 +202,7 @@ def create_shellcode(asm_code, os_target, os_target_arch, make_exe=0, debug=0, f
     if dll_inj_funcs:
         generate_dll(os_target, os_target_arch, asm_code, filename, dll_inj_funcs, debug)
     return shellcode, asm_file.split(".")[0]
+
 
 def generate_dll(os_target, os_target_arch, asm_code, filename, dll_inj_funcs, debug):
     asm_code = asm_code.replace("global _start", "").replace("_start:", "")
@@ -206,66 +221,113 @@ def make_binary_from_obj(o_file, os_target, os_target_arch, debug=0, is_dll=Fals
     """
         Function for test shellcode with app written on c-language
     """
+    if is_dll and os_target == Constants.OS.LINUX:
+        print('Dll can be generated only for WINDOWS OS')
+        return None
     app = 'ld'
     find_app = ''
     if OS_SYSTEM == Constants.OS.WINDOWS:
-        app += ".exe"
-
-        find_app = search_file("%s" % app, Constants.SHELLCODES_REL_PATH)
+        if os_target == Constants.OS.LINUX:
+            app += '.gold'
+        elif os_target == Constants.OS.WINDOWS and os_target_arch == Constants.OS_ARCH.X64:
+            app += '64'
+        app += '.exe'
+        find_app = search_file("%s" % app, Constants.SHELLCODES_DEV_PATH)
         if find_app:
             if debug:
-                print "app: '%s' found at %s" % (app, find_app)
+                print("app: '%s' found at %s" % (app, find_app))
         else:
-            print "You must install app: '%s' and maybe edit environment variables path to it" % app
+            print("You must install app: '%s' and maybe edit environment variables path to it" % app)
             return None
     elif OS_SYSTEM == Constants.OS.LINUX:
         find_app = app
     else:
-        print "Can't understand source os: %s" % OS_SYSTEM
+        print ("Can't understand source os: %s" % OS_SYSTEM)
         return None
 
     c_exe = (o_file.split('.'))[0]
+    commands_list = [find_app, '-o', c_exe, o_file, '--strip-all']
     if OS_SYSTEM == Constants.OS.LINUX:
-        binary_type = ""
         if os_target == Constants.OS.WINDOWS:
-            binary_type = "-m i386pe"
-        if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
-            if is_dll:
-                p = Popen([find_app, binary_type, '-shared', '-o', c_exe, o_file])
-            else:
-                p = Popen([find_app, binary_type, '-o', c_exe, o_file])
-            p.communicate()
-
-        if os_target == Constants.OS.WINDOWS:
-            if is_dll:
-                os.rename(c_exe, c_exe + '.dll')
-            else:
-                os.rename(c_exe, c_exe + '.exe')
-
+            commands_list.append('-m')
+            commands_list.append('i386pe')
+        if is_dll:
+            commands_list.append('-shared')
+        p = Popen(commands_list)
+        p.communicate()
     elif OS_SYSTEM == Constants.OS.WINDOWS:
-        linux_name = c_exe
-        c_exe += ".dll" if is_dll else ".exe"
-        if os_target_arch == Constants.OS_ARCH.X32 or os_target_arch == Constants.OS_ARCH.X64:
-            if is_dll:
-                p = Popen([find_app, '-shared', '-o', c_exe, o_file])
-            else:
-                p = Popen([find_app, '-o', c_exe, o_file])
-            p.communicate()
-
-        if os_target == Constants.OS.LINUX:
-            if os.path.exists(linux_name):
-                os.remove(linux_name)
-            os.rename(c_exe, linux_name)
+        if is_dll:
+            commands_list.append('-shared')
+        p = Popen(commands_list)
+        p.communicate()
     else:
-        print "ERR: source os (%s) is not supported" % OS_SYSTEM
+        print ("ERR: source os (%s) is not supported" % OS_SYSTEM)
+    if os_target == Constants.OS.WINDOWS:
+        newname = c_exe + '.dll' if is_dll else c_exe + '.exe'
+        if os.path.exists(newname):
+            os.remove(newname)
+        os.rename(c_exe, newname)
+    print ("Complete. Now you can try to execute file: %s" % c_exe)
 
-    print "Complete. Now you can try to execute file: %s" % c_exe
 
-def make_exe_from_shellcode(shellcode):
-    pass
+def is_os_64bit():
+    return machine().endswith('64')
+
+
+def extract_shell_from_obj(file):
+    with open(file, 'rb') as f:
+        contents = f.read()
+    flag = contents[4]
+    if flag == '\x01':
+        length = struct.unpack('<H', contents[124:126])[0]
+        contents = contents[272:272 + length]
+    elif flag == '\x02':
+        length = struct.unpack('<H', contents[160:162])[0]
+        contents = contents[384:384 + length]
+    else:
+        raise Exception('Unknown architecture. Can\'t extract shellcode')
+    print(', '.join('0x%02x' % ord(c) for c in contents))
+    return contents
+
 
 def read_binary(filename):
     content = ''
     with open(filename, 'rb') as f:
         content = f.read()
     return content
+
+
+def replace_by_real_values(shellcode, kwargs):
+    for key, value in kwargs.items():
+        shellcode = shellcode.replace(key, value)
+    return shellcode
+
+
+def ip_to_hex(ip, is_big=True):
+    parts = [int(part) for part in ip.split('.')]
+    if is_big:
+        return ''.join(chr(part) for part in parts)
+    return ''.join(chr(part) for part in reversed(parts))
+
+
+def port_to_hex(port, is_big=True):
+    if is_big:
+        return struct.pack('>H', port)
+    return struct.pack('<H', port)
+
+
+def validate_ip_addr(addr):
+    import socket
+    try:
+        socket.inet_aton(addr)
+        return True
+    except socket.error:
+        return False
+
+
+def ip_to_dd(addr):
+    return ''.join('%02x' % int(x) for x in reversed(addr.split('.')))
+
+
+def port_to_dd(port):
+    return ''.join('%02x' % ord(x) for x in struct.pack('<H', port))

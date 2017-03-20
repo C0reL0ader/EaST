@@ -1,37 +1,40 @@
 ﻿#!/usr/bin/env python
+import sys
+import traceback
 import time
 import os
-import sys
 import json
 import logging
 import socket
 import base64
-
-# for random string
 from random import choice
 from string import ascii_letters
 from string import digits
-
-sys.path.append("./../core")
-
-
 from websocket import create_connection
+sys.path.append("./../core")
+from Commands import APIClient
+
 
 PORT = 49999
 HOST = "127.0.0.1"
 
-#simple common exception handler for method run
+
+# simple common exception handler for method run
 def _deco(self, func):
     def wrapper():
         try:
             res = func()
         except Exception as e:
-            res = None
-            self.logger.exception(e)
-            self.log(e)
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            self.log(''.join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
             self.finish(False)
+            # res = None
+            # self.logger.exception(e)
+            # self.log(e)
+            # self.finish(False)
         return res
     return wrapper
+
 
 class Sploit:
     """
@@ -44,6 +47,7 @@ class Sploit:
         """
         # Module name
         self.name = ""
+        self.__module_name = sys.argv[-1]
         # PID of running module
         self.pid = os.getpid()
         self.logger = logging.getLogger()
@@ -55,11 +59,11 @@ class Sploit:
         self.logger.addHandler(fh)
         self.connection = create_connection("ws://%s:%s" % (HOST, PORT),
                                             sockopt=((socket.IPPROTO_TCP, socket.TCP_NODELAY, 1),))
+        self.API_COMMANDS_HANDLER = APIClient(self.connection)
         self.hello()
         self.run = _deco(self, self.run)
         if bool(options):
             self.create_args(options)
-        return
 
     def create_args(self, options={}):
         self.args = self.args(options)
@@ -73,17 +77,15 @@ class Sploit:
         """
             This function get required options from server.
         """
-        req = dict(command="get_args_for_module", args=dict(pid=self.pid))
-        self.logger.info(req.__str__())
-        self.connection.send(json.dumps(req))
-        resp = self.connection.recv()
-        return json.loads(resp)
+        resp = self.API_COMMANDS_HANDLER.send_command('get_module_args', module_name=self.__module_name)
+        return resp
 
     def get_listener_options(self):
         """
         :return: Listener options from server
         """
-        return
+        resp = self.API_COMMANDS_HANDLER.send_command('get_listener_options', module_name=self.__module_name)
+        return resp
 
     def check(self):
         """
@@ -112,7 +114,7 @@ class Sploit:
         """
         image = base64.b64encode(image)
         try:
-            self.send_message(image, type="image")
+            self.send_message(image, msg_type="image")
         except Exception as e:
             self.logger.exception(e)
         return
@@ -129,13 +131,14 @@ class Sploit:
             self.send_message(message, inline=inline, replace=replace)
         except Exception as e:
             self.logger.exception(e)
+            print e
         return
 
     def finish(self, is_successful):
         """
-            This function finishes module execution
-            if <is_successful>=True - module done succefully
-            if <is_successful>=False - module failed
+        Finishes module execution
+        Args:
+            is_successful: (bool) If True - module succeeded, False - module failed
         """
         if is_successful:
             msg = "Module %s was succeeded" % self.name
@@ -146,9 +149,12 @@ class Sploit:
 
     def writefile(self, filedata, filename=""):
         """
-        This function is for saving the result of the
+        Save the result of the
         exploit if the results are too large to print or if the aim
         of the exploit is to steal some info or download the file.
+        Args:
+            filedata: (string) Contents of file
+            filename: (string) Filename
         """
         dirname = "./OUTPUTS/" + self.name
         if not filename:
@@ -156,7 +162,7 @@ class Sploit:
         if not os.path.exists(dirname):
             try:
                 os.makedirs(dirname)
-            except Exception, exception:
+            except Exception as e:
                 """
                 ! The kind of error sould be
                 managed with respect to
@@ -178,14 +184,27 @@ class Sploit:
         self.log("wrote to %s" % filepath)
         return 1
 
-    def send_message(self, message, is_successful=None, inline=False, replace=False, type="text"):
+    def connect_to_remote_shell(self, target_ip, target_port):
+        """
+        Use this method to connect to bind paylod
+        Args:
+            target_ip: IP address of target
+            target_port: PORT of bind payload
+        """
+        import subprocess
+        from Commands import FW_ROOT_PATH
+        bind_shell_path = os.path.join(FW_ROOT_PATH, 'listener', 'bind_connector.py')
+        self.API_COMMANDS_HANDLER.send_command('add_listener_options', module_name=self.__module_name,
+                                               options=dict(HOST=target_ip, PORT=target_port))
+        listener_process = subprocess.Popen([sys.executable, bind_shell_path, self.__module_name], shell=False, env=os.environ.copy())
+        self.API_COMMANDS_HANDLER.send_command('add_listener_pid', module_name=self.__module_name, pid=listener_process.pid)
+
+
+    def send_message(self, message, is_successful=None, inline=False, replace=False, msg_type="text"):
         self.logger.debug(message)
-        args = dict(pid=self.pid, module_name=self.name, message=str(message).decode("cp1251").encode("utf-8"),
-                    state=is_successful, inline=inline, replace=replace, type=type)
-        req = dict(command="message", args=args)
-        self.connection.send(json.dumps(req))
-        # waiting for response
-        self.connection.recv()
+        self.API_COMMANDS_HANDLER.send_command('register_module_message', module_name=self.__module_name,
+                                               message=str(message), state=is_successful,
+                                               inline=inline, replace=replace, type=msg_type)
         if is_successful is not None:
             self.connection.close()
 
@@ -196,23 +215,12 @@ class Sploit:
                  False - if shell is not connected to listener
                  None - if listener is not available
         """
-        time.sleep(1) # for limiting requests
-        args = dict(pid=self.pid)
-        req = dict(command="is_listener_connected", args=args)
-        self.connection.send(json.dumps(req))
-        state = None
-        try:
-            resp = self.connection.recv()
-            state = json.loads(resp).get("state")
-        except Exception as e:
-            self.logger.exception(e)
-        return state
+        time.sleep(1)  # for limiting requests
+        resp = self.API_COMMANDS_HANDLER.send_command('is_listener_connected', module_name=self.__module_name)
+        return resp.get('state')
 
     def hello(self):
-        args = dict(hello=dict(name=self.pid.__str__(), type="module"))
-        self.connection.send(json.dumps(args))
-        # wait for hello
-        self.connection.recv()
+        self.API_COMMANDS_HANDLER.hello(self.__module_name, 'module')
 
     def random_string(self, size=6, chars=ascii_letters + digits):
         # you can change chars to digits or specify your string value

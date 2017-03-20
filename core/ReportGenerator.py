@@ -70,7 +70,7 @@ class ReportGenerator:
     def _rewrite_report(self):
         contents= ""
         index = 1
-        for category_name in self.categories.keys():
+        for category_name in self.categories:
             contents += "<div class='categoryName'>{}.) <a href='#{}'>{}</a></div>".format(index, category_name.lower(), category_name)
             index += 1
         contents += "<br>"

@@ -107,7 +107,8 @@ $(document).ready(function() {
             moduleName: {},
             useListener: false,
             useCustomPort: false,
-            customPort: 4444
+            customPort: 4444,
+            listenerType: 1
         },
 
         methods: {
@@ -133,6 +134,7 @@ $(document).ready(function() {
             ok: function() {
                 var args = {
                     module_name: this.moduleName,
+                    listener_type: this.listenerType,
                     use_listener: this.useListener,
                     use_custom_port: this.useCustomPort,
                     custom_port: this.customPort,
@@ -146,7 +148,7 @@ $(document).ready(function() {
                     }
                     var data = {
                         title: args.module_name,
-                        content: [{message: 'Starting ' + args.module_name}],
+                        content: [{message: 'Module ' + args.module_name + ' has been started', type: 'text'}],
                         active: true,
                         useListener: args.listener,
                         listenerMessages: '',

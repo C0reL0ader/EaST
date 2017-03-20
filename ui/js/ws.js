@@ -8,8 +8,9 @@ commonData = {
     tabs: [],
     target: "",
     selectedModule: {},
-    serverEnabled: true
-}
+    serverEnabled: true,
+    serviceMessages: []
+};
 
 var WebsocketHandler= function() {
     this.connectionString = 'ws://'+window.location.hostname+':49999/';
@@ -72,9 +73,10 @@ WebsocketHandler.prototype = {
                         state: value.state
                     }
                 });
-                tabsData[0].active = true;
+                if (tabsData.length) {
+                    tabsData[0].active = true;
+                }
                 _.extend(commonData, {tabs: tabsData});
-                // console.log(args);
             })
     },
     onOpen: function(evt) {
@@ -110,12 +112,12 @@ WebsocketHandler.prototype = {
         websocketHandler.websocket.onmessage = this.onMessage;
         websocketHandler.websocket.onerror = this.onError;
     }
-}    
-
-
+}
 
 websocketHandler = new WebsocketHandler();
-function doSend(message){
+function doSend(message, callback){
+    message.uuid = genUUID4();
+    bindEvent(message.uuid, callback);
     websocketHandler.doSend(message);
 }
 function bindEvent(event_type, callback) {

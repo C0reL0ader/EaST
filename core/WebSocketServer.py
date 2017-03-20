@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import Queue
 import asyncore
 import errno
@@ -8,6 +9,8 @@ from StringIO import StringIO
 from base64 import b64encode
 from hashlib import sha1
 from mimetools import Message
+import os
+import signal
 import socket
 from threading import Thread
 
@@ -54,29 +57,36 @@ class WebSocketServer(asyncore.dispatcher):
     def handle_close(self):
         self.close()
 
-    def add_process(self, process):
-        self.all_processes.append(process)
+    def add_process(self, pid):
+        self.all_processes.append(pid)
 
-    def remove_process(self, process):
-        if process in self.all_processes:
-            self.all_processes.remove(process)
+    def remove_process(self, pid):
+        if pid in self.all_processes:
+            self.all_processes.remove(pid)
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except:
+                pass
 
     def kill_all_processes(self):
         for client in self.clients.values():
             client.close()
-        for proc in self.all_processes:
-            proc.kill()
+        for pid in self.all_processes:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except:
+                pass
         self.close()
         sys.exit(1)
 
-    def get_client_by_name(self, name):
+    def get_client_by_name_and_type(self, name, client_type=ClientTypes.listener):
         for client in self.clients.values():
-            if client.name == name:
+            if client.name == name and client.type == client_type:
                 return client
         return None
 
-    def send_message_to_client(self, name, message):
-        client = self.get_client_by_name(name)
+    def send_message_to_listener(self, name, message):
+        client = self.get_client_by_name_and_type(name)
         if client:
             client.send_message(message)
 
@@ -116,6 +126,7 @@ class WebsocketHandler(asyncore.dispatcher):
         self.send(data)
 
     def send_message(self, message):
+        message = json_encode(message)
         self.data_to_write.put(chr(129))
         length = len(message)
         if length <= 125:
@@ -225,11 +236,11 @@ class WebsocketHandler(asyncore.dispatcher):
             return
         # Check for hello
         if "hello" in message:
-            self.hello(message["hello"])
+            self.hello(message["hello"], message['uuid'])
             return
         self.server.command_handler.execute(message, self)
 
-    def hello(self, args):
+    def hello(self, args, uuid):
         """After connection to server client must do handshake sending its name and type
         Params:
                 args: (dict)
@@ -241,7 +252,7 @@ class WebsocketHandler(asyncore.dispatcher):
         self.type = type
         self.name = name
         self.logger.info("Hello," + self.name)
-        self.send_message(json.dumps(dict(command="hello")))
+        self.send_message(dict(command="on_callback", uuid=uuid))
 
     def check_and_make_unique_name(self, name, suffix=1):
         names = [client.name for client in self.server.clients.values()]
@@ -266,6 +277,19 @@ def parse_json(message):
     try:
         data = json.loads(message)
     except Exception, e:
+        print(e)
+        logging.getLogger(__name__).exception(e)
+        return None
+    return data
+
+
+def json_encode(message):
+    if not message:
+        return message
+    try:
+        data = json.dumps(message)
+    except Exception, e:
+        print(e)
         logging.getLogger(__name__).exception(e)
         return None
     return data

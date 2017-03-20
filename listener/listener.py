@@ -9,6 +9,7 @@ import errno
 import time
 from websocket import create_connection
 import select
+from Commands import APIClient
 
 
 class ListenerHandler(asyncore.dispatcher):
@@ -42,7 +43,7 @@ class ListenerHandler(asyncore.dispatcher):
             return
         resp = json.loads(self.listener.connection.recv())
         self.listener.logger.info("Recieved: " + str(resp))
-        command = resp["message"].encode('cp866')
+        command = resp.get('message')
         if not command:
             return
         self.send(command+"\n")
@@ -58,6 +59,7 @@ class ListenerHandler(asyncore.dispatcher):
 
 class Listener(asyncore.dispatcher):
     def __init__(self):
+        self.__module_name = sys.argv[-1]
         asyncore.dispatcher.__init__(self)
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
@@ -72,6 +74,7 @@ class Listener(asyncore.dispatcher):
         self.wsport = 49999
         self.handler = None
         self.connection = create_connection("ws://%s:%s" % ("127.0.0.1", self.wsport))
+        self.api = APIClient(self.connection)
         self.hello()
         self.run()
 
@@ -107,27 +110,16 @@ class Listener(asyncore.dispatcher):
                       1 - shell connected
                       2 - shell disconnected
         '''
-        message = message.decode('cp866')
         self.logger.info(("Listener PID = %s" % self.pid) + message)
-        req = dict(command="listener_message", args=dict(message=message, pid=self.pid, state=state))
-        self.connection.send(json.dumps(req))
+        self.api.send_command('on_listener_message', message=message, module_name=self.__module_name, state=state)
 
     def get_options(self):
-        req = dict(command="listener_get_options", args=dict(pid=self.pid))
-        self.connection.send(json.dumps(req))
-        resp = {}
-        try:
-            resp = json.loads(self.connection.recv())
-        except Exception as e:
-            self.logger.exception(e)
+        resp = self.api.send_command('get_listener_options', module_name=self.__module_name)
         self.logger.debug(resp)
         return resp
 
     def hello(self):
-        data = dict(hello=dict(name=self.pid.__str__(), type="listener"))
-        self.connection.send(json.dumps(data))
-        # wait for hello
-        self.connection.recv()
+        self.api.hello(self.__module_name, 'listener')
 
 if __name__=="__main__":
     server = Listener()

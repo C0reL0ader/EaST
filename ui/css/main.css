@@ -1,6 +1,12 @@
 * {
 	box-sizing: border-box;
 }
+.text-white {
+    color: white;
+}
+.text-danger {
+    color: #a94442 !important;
+}
 
 .modal {
     display: block;
@@ -45,7 +51,9 @@
     cursor: pointer;
 }
 
-
+table input[type=checkbox] {
+    margin-bottom: 10px;
+}
 pre {
     white-space: pre-wrap;
 	word-wrap: break-word;
@@ -150,13 +158,50 @@ pre {
 #optionsDialog table {
     width: 100%;
 }
-
-.treeView li {
+.treeview, .treeview ul, .treeview li {
+    position: relative;
+}
+.treeview li {
     white-space: nowrap;
 }
-/*.treeView li .leaf:hover {
-    border-bottom: 1px solid rgba(1,1,1,0.6);
-}*/
+
+.treeview .glyphicon {
+    top: 0px;
+}
+
+.treeview ul {
+    list-style: none;
+    padding-left: 32px;
+}
+.treeview>ul {
+    padding-left: 10px;
+}
+.treeview ul, .treeview li {
+    cursor: pointer;
+    padding-bottom: 5px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.treeView ul>li:hover {
+    background-color: #f9f9f9;
+}
+.treeview .hidden {
+    display: none;
+}
+
+
+.form-group .form-control-feedback {
+  pointer-events: initial
+}
+.pointer {
+    cursor: pointer;
+}
+
 .nav-tabs>li>a {
     margin-right: 0px;
 }
@@ -171,5 +216,12 @@ pre {
 
 [v-cloak] {
   display: none;
+}
+
+.service-messages-container {
+    display: none;
+}
+.popover {
+    max-width: none;
 }
 
