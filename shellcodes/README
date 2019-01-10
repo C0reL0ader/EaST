@@ -1,0 +1,4 @@
+Generate shellcodes are tested on:
+1. WIN 32bit XP SP2
+2. WIN 32bit 7 Ultimate
+3. Linux 3.13.0-57-generic Ubuntu x86_64 x86_64 x86_64 GNU/Linux

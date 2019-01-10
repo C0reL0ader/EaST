@@ -1,0 +1,125 @@
+
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>EaST Framework</title>
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/toastr.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/codemirror.css"/>
+    <link rel="stylesheet" type="text/css" href="css/main.css"/>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/lodash.min.js"></script>
+    <script src="js/rsvp.js"></script>
+    <script src="js/toastr.min.js"></script>
+    <script src="js/vue.min.js"></script>
+    <script src="js/codemirror.js"></script>
+    <script src="mode/python/python.js"></script>
+    <script src="js/guiCommands.js"></script>
+    <script src="js/serverCommands.js"></script>
+    <script src="js/ws.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/main.js"></script>
+  </head>
+  <body style="position: absolute; height: 100vh; width: 100vw">
+
+   <!--TEXT EDITOR-->
+    <div id="editorDialog" v-cloak>
+      <re-modal :show.sync="show" @ok="save" :large="true" ok-text="Save">
+        <textarea id="editor"></textarea>
+        <div slot="header" class="text-center">
+          <h4>Edit {{title}}</h4>
+        </div>
+      </re-modal>
+    </div>
+
+   <!--OPTIONS MODAL DIALOG-->
+    <div id="optionsDialog" v-cloak>
+      <re-modal :show.sync="show" @ok="ok" ok-text="Run">
+        <table>
+          <colgroup>
+            <col style="width: 50%" />
+            <col style="width: 25%" />
+            <col style="width: 25%" />
+          </colgroup>
+          <tr>
+            <td><label>USE LISTENER:</label></td>
+            <td><input type="checkbox" v-model="useListener" @click="checkCustomPort()"/></td>
+            <td>
+              <select v-show="useListener" v-model="listenerType" class="form-control">
+                <option value="1">Reverse</option>
+                <option value="2">Bind</option>
+              </select>
+            </td>
+          </tr>
+          <tr v-show="useListener && listenerType==1">
+            <td><label>USE CUSTOM LISTENER PORT:</label></td>
+            <td colspan="2"><input type="checkbox" v-model="useCustomPort" @click="enableListener()"/></td>
+          </tr>
+          <tr v-show="useListener && listenerType==1">
+            <td><label>CUSTOM LISTENER PORT:</label></td>
+            <td colspan="2"><input type="number" :disabled="!useCustomPort" class="form-control" v-model="customPort"/></td>
+          </tr>
+        </table>
+        <hr>
+        <table>
+          <tr v-for="option in options" title="{{option.value.description || ''}}">
+            <td><label>{{option.option}}:</label></td>
+            <td>
+              <input v-show="option.value.type == 'int'" type="number" v-model="option.value.value" class="form-control"/>
+              <input v-show="option.value.type == 'string'" type="" v-model="option.value.value" class="form-control"/>
+              <input v-show="option.value.type == 'bool'" type="checkbox" v-model="option.value.value"/>
+              <select v-show="option.value.type == 'list'" v-model="option.value.selected" class="form-control">
+                <option v-for="opt in option.value.options" :selected="opt == option.value.selected">{{opt}}</option>
+              </select>
+            </td>
+          </tr>
+        </table>
+        <div slot="header" class="text-center">
+          <h4>{{moduleName}}</h4>
+        </div>
+      </re-modal>
+    </div>
+
+   <!--IMAGE POPUP-->
+    <div id="imagePopup" v-cloak>
+      <re-modal :show.sync="show" :full="true"><img :src="image || '/'"/>
+        <div slot="header" class="text-center">
+          <h4>Image</h4>
+        </div>
+        <div slot="footer">
+          <button type="button" :class="cancelClass" @click="show=false" class="btn btn-default">Close</button>
+        </div>
+      </re-modal>
+    </div>
+   <!--NAVIGATION BAR-->
+    <div id="mainVue">
+      <nav class="navbar navbar-inverse">
+        <div class="container-fluid">
+          <div v-cloak class="navbar-header"><a href="#" :class="{'text-danger': !serverEnabled}" class="navbar-brand">EaST Framework {{ version }}</a></div>
+          <re-service-messages :messages="serviceMessages"></re-service-messages>
+          <ul class="navbar-form navbar-right">
+            <div class="form-group">
+              <label class="text-white">Target:</label>
+              <input placeholder="127.0.0.1:80" v-model="target" class="form-control"/>
+            </div>
+          </ul>
+        </div>
+      </nav>
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-4">
+            <!--MODULES TREE-->
+            <tree-view :modules="modules" class="fg-white"></tree-view>
+            <!--MODULE INFO-->
+            <re-module-info :module.sync="selectedModule"></re-module-info>
+          </div>
+          <div class="col-md-8">
+            <!--TABS WITH CONTENT-->
+            <tab-view :tabs.sync="tabs"> </tab-view>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

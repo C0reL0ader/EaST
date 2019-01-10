@@ -1,0 +1,8 @@
+*.pyc
+Reports/
+Logs/
+/.idea
+/tmp/Webserver20160906100204
+/OUTPUTS
+/tmp
+exploits

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Report</title>
+    <style>
+        .succeeded {
+            background-color: #8FFC81;
+        }
+        .failed {
+            background-color: #FA7D7F;
+        }
+        .category_row {
+            left: 40px;
+            position: relative;
+        }
+        .entry {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .categoryName {
+            font-size:26px;
+            font-weight: bold;
+        }
+        .commonInfo {
+            font-size: 26px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="commonInfo">
+    <p>Server was started at: %s</p>
+    <p>Succeeded modules: %s</p>
+    <p>Failed modules: %s</p>
+</div>
+%s
+</body>
+</html>
