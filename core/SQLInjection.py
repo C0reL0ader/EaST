@@ -142,7 +142,7 @@ class BooleanBasedBlind(BlindInjectionBase):
         for char in self.charpool:
             req = self._prepare_request(pos, char)
             r = urllib2.urlopen(req)
-            if self.response_code == r.getcode() or self.error_message in r.read():
+            if not self.response_code == r.getcode() or not self.error_message in r.read():
                 return char
 
         return None
