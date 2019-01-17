@@ -24,6 +24,9 @@ $(document).ready(function() {
             },
             onModuleEdit: function(module) {
                 this.editSelectedModule(module.NAME)
+            },
+            onCreateModule: function() {
+                this.createModule()
             }
                     
         },
@@ -47,6 +50,10 @@ $(document).ready(function() {
                     var content = args.message;
                     editorDialog.showContent(moduleName, content);
                 });
+            },
+
+            createModule: function() {
+                createModuleDialog.showContent();
             },
 
             onModuleMessage: function(e) {
@@ -228,6 +235,27 @@ $(document).ready(function() {
                 this.content = this.editor.getValue();
                 guiCommandsHandler.saveSource(this.title, this.content);
                 this.show = false;
+            }
+        }
+    })
+
+    createModuleDialog = new Vue({
+        el: '#createModule',
+        data: {
+            show: false,
+            name: String
+        },
+        methods: {
+            showContent: function() {
+                this.show = true;
+            },
+            save: function() {
+                this.show = false;
+                var textarea = document.getElementById('create')
+                this.name = textarea.value
+                guiCommandsHandler.createModule(this.name)
+                textarea.value = ""
+                console.log(this.name)
             }
         }
     })

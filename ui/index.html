@@ -33,6 +33,16 @@
       </re-modal>
     </div>
 
+    <!--CREATE MODULE DIALOG-->
+      <div id="createModule" v-cloak>
+        <re-modal-create-module :show.sync="show" @ok="save" :large="true" ok-text="OK">
+          <textarea id="create"></textarea>
+          <div slot="header" class="text-center">
+            <h4>Create module</h4>
+          </div>
+        </re-modal-create-module>
+    </div>
+
    <!--OPTIONS MODAL DIALOG-->
     <div id="optionsDialog" v-cloak>
       <re-modal :show.sync="show" @ok="ok" ok-text="Run">
@@ -96,7 +106,9 @@
     <div id="mainVue">
       <nav class="navbar navbar-inverse">
         <div class="container-fluid">
-          <div v-cloak class="navbar-header"><a href="#" :class="{'text-danger': !serverEnabled}" class="navbar-brand">EaST Framework {{ version }}</a></div>
+          <div v-cloak class="navbar-header">
+            <re-btn-create-module style="display: inline-block"></re-btn-create-module>
+            <a href="#" :class="{'text-danger': !serverEnabled}" class="navbar-brand">EaST Framework {{ version }}</a></div>
           <re-service-messages :messages="serviceMessages"></re-service-messages>
           <ul class="navbar-form navbar-right">
             <div class="form-group">

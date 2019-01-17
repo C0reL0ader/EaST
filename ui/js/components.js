@@ -299,6 +299,135 @@ Vue.component('re-log-view', {
   }
 })
 
+var btn_create_module_template = function() {/*
+    <div class="create-module">
+      <button class="btn-create-module" type="button" @click="click">Create module</button>
+    </div>
+*/}.toString().slice(14, -3)
+
+Vue.component('re-btn-create-module', {
+  template: btn_create_module_template,
+  props: {
+    title: String
+  },
+  methods: {
+    click: function() {
+      console.log("Create module dialog shows up");
+      this.$dispatch('onCreateModule');
+    }
+  }
+})
+
+var modal_create_module_dialog_template = function() {/*
+<div v-show="show" :transition="transition">
+    <div class="modal" @click.self="clickMask">
+      <div class="modal-dialog" :class="modalClass" v-el:dialog>
+        <div class="modal-content">
+          <!--Header-->
+          <div class="modal-header">
+            <slot name="header">
+              <a type="button" class="close" @click="cancel">x</a>
+              <h4 class="modal-title">
+                <slot name="title">
+                    {{title}}
+                </slot>
+              </h4>
+            </slot>
+          </div>
+          <!--Container-->
+          <div class="modal-body">
+            <slot></slot>
+          </div>
+          <!--Footer-->
+          <div class="modal-footer">
+            <slot name="footer">
+              <button type="button" :class="cancelClass" @click="cancel">{{cancelText}}</button>
+              <button type="button" :class="okClass" @click="ok">{{okText}}</button>
+            </slot>
+          </div>
+        </div>
+      </div>
+    </div>
+  <div class="modal-backdrop in"></div>
+</div>
+*/}.toString().slice(14, -3)
+Vue.component('re-modal-create-module', {
+  template: modal_create_module_dialog_template,
+  props: {
+    module_name: String,
+    show: {
+      twoWay: true,
+      default: false
+    },
+    small: {
+        default: false
+    },
+    large: {
+        default: false
+    },
+    full: {
+        default: false
+    },
+    transition: {
+        default: 'modal'
+    },
+    cancelText: {
+      default: 'Cancel'
+    },
+    okText: {
+      default: 'OK'
+    },
+    force: {
+      default: false
+    }
+  },
+  computed: {
+    modalClass: function () {
+      return {
+          'modal-lg': this.large,
+          'modal-sm': this.small,
+          'modal-full': this.full
+      }
+    }
+  },
+  created: function() {
+    if (this.show) {
+      document.body.className += ' modal-open';
+    }
+  },
+  beforeDestroy: function() {
+    document.body.className = document.body.className.replace('modal-open', '');
+  },
+  watch: {
+    show: function(value) {
+      if (value) {
+        document.body.className += ' modal-open';
+      }
+      else {
+        if (!this.duration) {
+          this.duration = window.getComputedStyle(this.$el)['transition-duration'].replace('s', '') * 1000;
+        }
+        document.body.className = document.body.className.replace(' modal-open', '');
+      }
+    }
+  },
+  methods: {
+    ok: function() {
+      this.$emit('ok')
+      this.show = false
+    },
+    cancel: function() {
+      this.$emit('cancel')
+      this.show = false
+    },
+    clickMask: function() {
+        if (!this.force) {
+            this.cancel();
+        }
+    }
+  }
+})
+
 
 var modal_dialog_template = function(){/*
   <div v-show="show" :transition="transition">
