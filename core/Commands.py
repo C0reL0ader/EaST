@@ -416,10 +416,18 @@ class Commands(API):
 
     @API.callable
     def create_module(self, client, module_name):
+        # TODO: add input sanitization (both exploit and error wise)
         print('Commands.py: create_module()')
         print(module_name)
+
         if not module_name.endswith('.py'):
             module_name = module_name + '.py'
+
+        if os.path.isfile('./exploits/'+ module_name):
+            # if that name is already taken - abort, in order to not to replace the existing module
+            self.send_error(client, 'That name is already taken')
+            return
+
         try:
             with open('./exploits/'+ module_name, 'w') as create_f, open('./templates/clean.py', 'r') as read_f:
                 create_f.write(read_f.read())

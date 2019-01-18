@@ -225,3 +225,18 @@ pre {
     max-width: none;
 }
 
+.btn-create-module {
+    margin: 10px 0px;
+    width: 25px;
+    padding: 5px 5px 7px 5px;
+    color: #456;
+}
+
+#create {
+    resize: none;
+    width: 100%;
+    line-height: 1;
+    font-size: 12px;
+    margin: 0;
+    padding: 5px;
+}

@@ -301,7 +301,9 @@ Vue.component('re-log-view', {
 
 var btn_create_module_template = function() {/*
     <div class="create-module">
-      <button class="btn-create-module" type="button" @click="click">Create module</button>
+      <button class="btn btn-create-module" type="button" @click="click">
+        <span class="glyphicon glyphicon-plus"></span>
+      </button>
     </div>
 */}.toString().slice(14, -3)
 
@@ -312,7 +314,6 @@ Vue.component('re-btn-create-module', {
   },
   methods: {
     click: function() {
-      console.log("Create module dialog shows up");
       this.$dispatch('onCreateModule');
     }
   }

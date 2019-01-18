@@ -36,7 +36,8 @@
     <!--CREATE MODULE DIALOG-->
       <div id="createModule" v-cloak>
         <re-modal-create-module :show.sync="show" @ok="save" :large="true" ok-text="OK">
-          <textarea id="create"></textarea>
+          <h4>Enter module name:</h4>
+          <input type="text" id="create" rows="1"></input>
           <div slot="header" class="text-center">
             <h4>Create module</h4>
           </div>
