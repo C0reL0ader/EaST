@@ -55,7 +55,6 @@ GuiCommandsHandler.prototype = {
     createModule: function(module_name) {
         var data = {command: 'create_module', args: {'module_name': module_name}}
         doSend(data)
-        console.log('guiCommands: createModule()')
     },
 };
 guiCommandsHandler = new GuiCommandsHandler();

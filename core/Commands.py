@@ -416,12 +416,26 @@ class Commands(API):
 
     @API.callable
     def create_module(self, client, module_name):
-        # TODO: add input sanitization (both exploit and error wise)
+        """
+        Create new module with a given name
+        Args:
+            module_name: (string) Name of the new module
+        """
         print('Commands.py: create_module()')
         print(module_name)
+        dotdotslash_payloads = ['../', '..\\', '..\\/']
 
         if not module_name.endswith('.py'):
             module_name = module_name + '.py'
+
+        while True:
+            replace_occured = False
+            for payload in dotdotslash_payloads:
+                if payload in module_name:
+                    module_name = module_name.replace(payload, '')
+                    replace_occured = True
+            if not replace_occured:
+                break
 
         if os.path.isfile('./exploits/'+ module_name):
             # if that name is already taken - abort, in order to not to replace the existing module
@@ -432,6 +446,7 @@ class Commands(API):
             with open('./exploits/'+ module_name, 'w') as create_f, open('./templates/clean.py', 'r') as read_f:
                 create_f.write(read_f.read())
             self.send_info(client, 'Module created')
+            self.available_modules = self.get_all_modules_paths()
         except:
             self.send_error(client, 'Failed to create new module')
 

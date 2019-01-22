@@ -243,19 +243,19 @@ $(document).ready(function() {
         el: '#createModule',
         data: {
             show: false,
-            name: String
         },
         methods: {
             showContent: function() {
                 this.show = true;
             },
             save: function() {
+                var input = document.getElementById('create')
+                var name = input.value
+                if (name.length > 0) {
+                    guiCommandsHandler.createModule(name)
+                }
+                input.value = ""
                 this.show = false;
-                var textarea = document.getElementById('create')
-                this.name = textarea.value
-                guiCommandsHandler.createModule(this.name)
-                textarea.value = ""
-                console.log(this.name)
             }
         }
     })

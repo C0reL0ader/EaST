@@ -319,6 +319,22 @@ Vue.component('re-btn-create-module', {
   }
 })
 
+/*var module_options_template = function() {/*
+    <div v-cloak>
+      <input type="text"/>
+      <input type="text"/>
+      <input type="text"/>
+    </div>
+*//*}.toString().slice(14, -3)
+
+Vue.component('create-module-options', {
+  template = module_options_template,
+  props: {
+    option_name: String,
+    option_value: String
+  }
+})*/
+
 var modal_create_module_dialog_template = function() {/*
 <div v-show="show" :transition="transition">
     <div class="modal" @click.self="clickMask">
@@ -338,6 +354,10 @@ var modal_create_module_dialog_template = function() {/*
           <!--Container-->
           <div class="modal-body">
             <slot></slot>
+            <input type="checkbox" id="showAdvanced" v-model="show_advanced">Advanced</input>
+            <div v-show="show_advanced">
+              <h4>Module options:</h4>
+            </div>
           </div>
           <!--Footer-->
           <div class="modal-footer">
@@ -379,6 +399,9 @@ Vue.component('re-modal-create-module', {
       default: 'OK'
     },
     force: {
+      default: false
+    },
+    show_advanced: {
       default: false
     }
   },
@@ -425,6 +448,9 @@ Vue.component('re-modal-create-module', {
         if (!this.force) {
             this.cancel();
         }
+    },
+    openAdvanced: function() {
+        showAdvanced = document.getElementById("showAdvanced").value
     }
   }
 })
