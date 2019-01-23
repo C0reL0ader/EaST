@@ -319,21 +319,73 @@ Vue.component('re-btn-create-module', {
   }
 })
 
-/*var module_options_template = function() {/*
-    <div v-cloak>
-      <input type="text"/>
-      <input type="text"/>
-      <input type="text"/>
+var create_module_options_template = function() {/*
+    <div v-cloak class="create-module-option">
+      <input type="text" v-model="option_name" v-on:input="onChange()"/>
+      <template v-if="option_type == 'int' || option_type == 'string'">
+        <input type="text" v-model="option_value" v-on:input="onChange()"/>
+      </template>
+      <template v-if="option_type == 'boolean'">
+        <input type="checkbox">Enabled</input>
+      </template>
+      <template v-if="option_type == 'select'">
+        <select>
+        </select>
+      </template>
+      <input type="text" v-model="option_desc" v-on:input="onChange()"/>
+      <select v-model="option_type" @change="onChange()">
+        <option>int</option>
+        <option selected="">string</option>
+        <option>boolean</option>
+        <option>select</option>
+      </select>
+      <button class="btn btn-add-option" v-if="show_button" v-on:click="click">
+        Add option
+      </button>
     </div>
-*//*}.toString().slice(14, -3)
+*/}.toString().slice(14, -3)
 
 Vue.component('create-module-options', {
-  template = module_options_template,
+  template: create_module_options_template,
   props: {
+    id: Number,
     option_name: String,
-    option_value: String
+    option_value: String,
+    option_desc: String,
+    option_type: String,
+    show_button: {
+      default: true
+    }
+  },
+  data: function() {
+    var theData = {
+      option_name: this.option_name,
+      option_value: this.option_value,
+      option_desc: this.option_desc,
+      option_type: this.option_type
+    }
+    return theData
+  },
+  methods: {
+    click: function() {
+      this.show_button = false
+      var debug = this.option_name + ' ' +this.option_value + ' ' + this.option_desc + ' ' + this.id.toString()
+      //console.log(debug)
+      this.$dispatch('add_option')
+    },
+    onChange: function() {
+      //console.log('change in ' + this.id)
+      let data = {
+        id: this.id,
+        option_name: this.option_name,
+        option_value: this.option_value,
+        option_desc: this.option_desc,
+        option_type: this.option_type
+      }
+      this.$dispatch('create_module_option_changed', data)
+    }
   }
-})*/
+})
 
 var modal_create_module_dialog_template = function() {/*
 <div v-show="show" :transition="transition">
@@ -354,9 +406,16 @@ var modal_create_module_dialog_template = function() {/*
           <!--Container-->
           <div class="modal-body">
             <slot></slot>
+            <input type="text" id="create" rows="1" autocomplete="off" v-model="moduleName"></input>
             <input type="checkbox" id="showAdvanced" v-model="show_advanced">Advanced</input>
             <div v-show="show_advanced">
               <h4>Module options:</h4>
+              <div style="display: table; width: 70%">
+                <h3 style="display: table-cell">name</h3>
+                <h3 style="display: table-cell">value</h3>
+                <h3 style="display: table-cell">description</h3>
+              </div>
+              <create-module-options v-for="data in moduleOptions" :show_button="data.show" :option_name="data.name" :option_value="data.value" :option_desc="data.desc" :id="data.id"/>
             </div>
           </div>
           <!--Footer-->
@@ -375,7 +434,15 @@ var modal_create_module_dialog_template = function() {/*
 Vue.component('re-modal-create-module', {
   template: modal_create_module_dialog_template,
   props: {
-    module_name: String,
+    moduleName: String,
+    moduleOptions: {
+      twoWay: true,
+      default: [
+      {id:0, name:'', value:'', desc:'', type: 'string', show:true }
+    ]},
+    optionId: {
+      default: 1
+    },
     show: {
       twoWay: true,
       default: false
@@ -403,6 +470,20 @@ Vue.component('re-modal-create-module', {
     },
     show_advanced: {
       default: false
+    }
+  },
+  events: {
+    add_option: function() {
+      this.moduleOptions.push({id:this.optionId, name:'', value:'', desc:'', type:'string', show:true })
+      this.optionId++
+    },
+    create_module_option_changed: function(data) {
+      console.log(data)
+      console.log(this.moduleOptions[data.id])
+      this.moduleOptions[data.id].name = data.option_name
+      this.moduleOptions[data.id].value = data.option_value
+      this.moduleOptions[data.id].desc = data.option_desc
+      console.log(this.moduleOptions[data.id])
     }
   },
   computed: {
@@ -438,11 +519,17 @@ Vue.component('re-modal-create-module', {
   methods: {
     ok: function() {
       this.$emit('ok')
+      var filtered = this.moduleOptions.filter(function(value, index, arr){
+        return value.name.length > 0 && value.value.length > 0;
+      })
+      guiCommandsHandler.createModule(this.moduleName, filtered)
       this.show = false
     },
     cancel: function() {
       this.$emit('cancel')
       this.show = false
+      this.moduleOptions = [{id:0, name:'', value:'', desc:'', type: 'string', show:true }]
+      this.optionId = 1
     },
     clickMask: function() {
         if (!this.force) {

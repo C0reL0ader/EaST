@@ -415,19 +415,16 @@ class Commands(API):
         return resp
 
     @API.callable
-    def create_module(self, client, module_name):
+    def create_module(self, client, module_name, module_options):
         """
         Create new module with a given name
         Args:
             module_name: (string) Name of the new module
         """
-        print('Commands.py: create_module()')
-        print(module_name)
-        dotdotslash_payloads = ['../', '..\\', '..\\/']
-
-        if not module_name.endswith('.py'):
+        if not module_name.lower().endswith('.py'):
             module_name = module_name + '.py'
 
+        dotdotslash_payloads = ['../', '..\\', '..\\/']
         while True:
             replace_occured = False
             for payload in dotdotslash_payloads:
@@ -442,13 +439,15 @@ class Commands(API):
             self.send_error(client, 'That name is already taken')
             return
 
+        print('{} {}'.format(module_name, module_options))
+
         try:
             with open('./exploits/'+ module_name, 'w') as create_f, open('./templates/clean.py', 'r') as read_f:
                 create_f.write(read_f.read())
             self.send_info(client, 'Module created')
             self.available_modules = self.get_all_modules_paths()
-        except:
-            self.send_error(client, 'Failed to create new module')
+        except Exception as ex:
+            self.send_error(client, 'Failed to create new module\r\n{}'.format(ex))
 
     def make_error(self, error_msg):
         return dict(error=True, message=error_msg)

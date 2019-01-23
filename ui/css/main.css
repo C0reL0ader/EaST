@@ -227,10 +227,21 @@ pre {
 
 .btn-create-module {
     margin: 10px 0px;
-    width: 25px;
     height: 25px;
     padding: 3px 5px 5px 5px;
     color: #333;
+}
+.btn-add-option {
+    background: #9999;
+    border-radius: 15px;
+    text-align: center;
+    height: 25px;
+    width: 83px;
+    padding: 0px;
+}
+
+.create-module-option{
+    margin: 5px;
 }
 
 #create {

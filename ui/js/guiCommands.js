@@ -52,8 +52,8 @@ GuiCommandsHandler.prototype = {
         doSend(data, callback);
     },
 
-    createModule: function(module_name) {
-        var data = {command: 'create_module', args: {'module_name': module_name}}
+    createModule: function(module_name, module_options) {
+        var data = {command: 'create_module', args: {'module_name': module_name, 'module_options': module_options}}
         doSend(data)
     },
 };

@@ -242,12 +242,12 @@ $(document).ready(function() {
     createModuleDialog = new Vue({
         el: '#createModule',
         data: {
-            show: false,
+            show: false
         },
         methods: {
             showContent: function() {
                 this.show = true;
-            },
+            }/*,
             save: function() {
                 var input = document.getElementById('create')
                 var name = input.value
@@ -256,7 +256,7 @@ $(document).ready(function() {
                 }
                 input.value = ""
                 this.show = false;
-            }
+            }*/
         }
     })
 });
