@@ -240,8 +240,34 @@ pre {
     padding: 0px;
 }
 
+.btn-delete-option {
+    background: #9999;
+    border-radius: 15px;
+    text-align: center;
+    height: 25px;
+    width: 83px;
+    padding: 0px;
+}
+
 .create-module-option{
     margin: 5px;
+}
+
+table#newModuleOptions {
+    width: 100%;
+    border: 1px solid black;
+}
+
+table#newModuleOptions th {
+    padding: 0px 5px;
+}
+
+table#newModuleOptions td {
+    padding: 5px;
+}
+
+table#newModuleOptions tr {
+    width: 80%;
 }
 
 #create {

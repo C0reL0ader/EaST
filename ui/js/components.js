@@ -320,29 +320,44 @@ Vue.component('re-btn-create-module', {
 })
 
 var create_module_options_template = function() {/*
-    <div v-cloak class="create-module-option">
-      <input type="text" v-model="option_name" v-on:input="onChange()"/>
-      <template v-if="option_type == 'int' || option_type == 'string'">
-        <input type="text" v-model="option_value" v-on:input="onChange()"/>
-      </template>
-      <template v-if="option_type == 'boolean'">
-        <input type="checkbox">Enabled</input>
-      </template>
-      <template v-if="option_type == 'select'">
-        <select>
+    <tr>
+      <td>
+        <input type="text" v-model="option_name" v-on:input="onChange()"/>
+      </td>
+      <td>
+        <select v-model="option_type" @change="onChange()">
+          <option>int</option>
+          <option selected="">string</option>
+          <option>boolean</option>
+          <option>select</option>
         </select>
-      </template>
-      <input type="text" v-model="option_desc" v-on:input="onChange()"/>
-      <select v-model="option_type" @change="onChange()">
-        <option>int</option>
-        <option selected="">string</option>
-        <option>boolean</option>
-        <option>select</option>
-      </select>
-      <button class="btn btn-add-option" v-if="show_button" v-on:click="click">
-        Add option
-      </button>
-    </div>
+      </td>
+      <td>
+        <template v-if="option_type == 'int' || option_type == 'string'">
+          <input type="text" v-model="option_value" v-on:input="onChange()"/>
+        </template>
+        <template v-if="option_type == 'boolean'">
+          <input type="checkbox">Enabled</input>
+        </template>
+        <template v-if="option_type == 'select'">
+          <select>
+          </select>
+        </template>
+      </td>
+      <td>
+        <input type="text" v-model="option_desc" v-on:input="onChange()"/>
+      </td>
+      <td>
+        <button class="btn btn-add-option" v-if="show_button" v-on:click="click">
+          Add option
+        </button>
+      </td>
+      <td>
+        <button class="btn btn-delete-option"> 
+          Delete
+        </button>
+      </td>
+    </tr>
 */}.toString().slice(14, -3)
 
 Vue.component('create-module-options', {
@@ -383,6 +398,10 @@ Vue.component('create-module-options', {
         option_type: this.option_type
       }
       this.$dispatch('create_module_option_changed', data)
+    },
+    onDelete: function() {
+      let data = {id: this.id}
+      this.$dispatch('delete_module_option', data)
     }
   }
 })
@@ -410,12 +429,17 @@ var modal_create_module_dialog_template = function() {/*
             <input type="checkbox" id="showAdvanced" v-model="show_advanced">Advanced</input>
             <div v-show="show_advanced">
               <h4>Module options:</h4>
-              <div style="display: table; width: 70%">
-                <h3 style="display: table-cell">name</h3>
-                <h3 style="display: table-cell">value</h3>
-                <h3 style="display: table-cell">description</h3>
-              </div>
-              <create-module-options v-for="data in moduleOptions" :show_button="data.show" :option_name="data.name" :option_value="data.value" :option_desc="data.desc" :id="data.id"/>
+              <table id="newModuleOptions">
+                <tr>
+                  <th>name</th>
+                  <th>type</th>
+                  <th>value</th>
+                  <th>description</th>
+                </tr>
+                <template v-for="data in moduleOptions">
+                  <create-module-options :show_button="data.show" :option_name="data.name" :option_value="data.value" :option_desc="data.desc" :id="data.id"/>
+                </template>
+              </table>
             </div>
           </div>
           <!--Footer-->
@@ -484,6 +508,9 @@ Vue.component('re-modal-create-module', {
       this.moduleOptions[data.id].value = data.option_value
       this.moduleOptions[data.id].desc = data.option_desc
       console.log(this.moduleOptions[data.id])
+    },
+    create_module_option_changed: function() {
+      
     }
   },
   computed: {
