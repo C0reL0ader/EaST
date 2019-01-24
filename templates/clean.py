@@ -1,7 +1,7 @@
 from Sploit import Sploit
 from collections import OrderedDict
 
-INFO = {}
+INFO = OrderedDict()
 INFO['NAME'] = ""
 INFO['DESCRIPTION'] = ""
 INFO['VENDOR'] = ""
@@ -15,10 +15,7 @@ INFO['PATH'] = "/"
 INFO['AUTHOR'] = ""
 
 OPTIONS = OrderedDict()
-OPTIONS["OPTION1"] = "VALUE1", dict(description="Option description") # Will create text field in GUI and returns "str" value type
-OPTIONS["OPTION2"] = 10, dict(description="Option description") # Will create text field and returns "int" value type
-OPTIONS["OPTION3"] = False, dict(description="Option description") # Will create checkbox and returns "bool" value type
-OPTIONS["OPTION4"] = dict(options=["value1", "value2"], selected="value1"), dict(description="Option description") # Will create combobox and you'll can choose value(in this case "value1" or "value2"). Field "selected" makes value default
+{MODULE_OPTIONS}
 
 class exploit(Sploit):
     def __init__(self,host="",
@@ -26,12 +23,12 @@ class exploit(Sploit):
                 logger=None):
         Sploit.__init__(self, logger=logger)
 
+{MODULE_FIELDS}
+
     def args(self):
         self.args = Sploit.args(self, OPTIONS)
-        self.option1 = self.args.get("OPTION1")
-        self.option2 = self.args.get("OPTION2")
-        self.option3 = self.args.get("OPTION3")
-        self.option4 = self.args.get("OPTION4")
+{MODULE_GETARGS}
+        
 
     def run(self):
         #Get options from gui

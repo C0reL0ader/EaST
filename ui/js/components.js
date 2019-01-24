@@ -337,10 +337,12 @@ var create_module_options_template = function() {/*
           <input type="text" v-model="option_value" v-on:input="onChange()"/>
         </template>
         <template v-if="option_type == 'boolean'">
-          <input type="checkbox">Enabled</input>
+          <input type="checkbox" v-bind:value="option_value" v-on:input="onChange(option_type)">Enabled</input>
         </template>
         <template v-if="option_type == 'select'">
           <select>
+            <option>
+            </option>
           </select>
         </template>
       </td>
@@ -353,7 +355,7 @@ var create_module_options_template = function() {/*
         </button>
       </td>
       <td>
-        <button class="btn btn-delete-option"> 
+        <button class="btn btn-delete-option" v-on:click="onDelete"> 
           Delete
         </button>
       </td>
@@ -365,7 +367,9 @@ Vue.component('create-module-options', {
   props: {
     id: Number,
     option_name: String,
-    option_value: String,
+    option_value: {
+      default: this.defaultValue
+    },
     option_desc: String,
     option_type: String,
     show_button: {
@@ -377,19 +381,30 @@ Vue.component('create-module-options', {
       option_name: this.option_name,
       option_value: this.option_value,
       option_desc: this.option_desc,
-      option_type: this.option_type
+      option_type: this.option_type,
+      show_button: this.show_button
     }
     return theData
   },
   methods: {
     click: function() {
       this.show_button = false
-      var debug = this.option_name + ' ' +this.option_value + ' ' + this.option_desc + ' ' + this.id.toString()
-      //console.log(debug)
-      this.$dispatch('add_option')
+      this.$dispatch('add_option', this.id)
     },
-    onChange: function() {
-      //console.log('change in ' + this.id)
+    onChange: function(input_type) {
+      // inventing bycicle...
+      // TODO: refactor this
+      if (input_type == 'boolean') {
+        if (this.option_value == 'false') {
+          this.option_value = 'True'
+        }
+        else if (this.option_value == 'true') {
+          this.option_value = 'False'
+        }
+        else {
+          this.option_value = 'True'
+        }
+      }
       let data = {
         id: this.id,
         option_name: this.option_name,
@@ -497,20 +512,45 @@ Vue.component('re-modal-create-module', {
     }
   },
   events: {
-    add_option: function() {
+    add_option: function(id) {
       this.moduleOptions.push({id:this.optionId, name:'', value:'', desc:'', type:'string', show:true })
       this.optionId++
+      for (var i = 0; i < this.moduleOptions.length - 1; i++) {
+        if (this.moduleOptions[i].id === id) {
+          this.moduleOptions[i].show = false
+          break
+        }
+      }
     },
     create_module_option_changed: function(data) {
-      console.log(data)
-      console.log(this.moduleOptions[data.id])
-      this.moduleOptions[data.id].name = data.option_name
-      this.moduleOptions[data.id].value = data.option_value
-      this.moduleOptions[data.id].desc = data.option_desc
-      console.log(this.moduleOptions[data.id])
+      console.log('change intercepted')
+      console.log('value ' + data.option_value)
+      this.debug()
+      for (var i = 0; i < this.moduleOptions.length; i++) {
+        if (this.moduleOptions[i].id === data.id) {
+          this.moduleOptions[i].name = data.option_name
+          this.moduleOptions[i].value = data.option_value
+          this.moduleOptions[i].desc = data.option_desc
+          this.moduleOptions[i].type = data.option_type
+          console.log('change made\r\n')
+          this.debug()
+          break
+        }
+      }
     },
-    create_module_option_changed: function() {
-      
+    delete_module_option: function(data) {
+      if (this.moduleOptions.length === 1) {
+        return
+      }
+      this.moduleOptions = this.moduleOptions.filter(function(value, index, arr) {
+        return value.id != data.id
+      })
+      if (data.id === this.optionId - 1) {
+        var index = this.moduleOptions.length - 1
+        this.moduleOptions[index].show = true
+        this.optionId--
+      }
+
     }
   },
   computed: {
@@ -565,6 +605,12 @@ Vue.component('re-modal-create-module', {
     },
     openAdvanced: function() {
         showAdvanced = document.getElementById("showAdvanced").value
+    },
+    debug: function() {
+      for (var i = 0; i < this.moduleOptions.length; i++) {
+        var info = this.moduleOptions[i].name + ' ' + this.moduleOptions[i].type + ' ' + this.moduleOptions[i].value + ' ' + this.moduleOptions[i].desc
+        console.log(info)
+      }
     }
   }
 })

@@ -7,6 +7,7 @@ import logging
 import inspect
 import Modules
 import PortScannerMT
+from CreateModuleHandler import CreateModuleHandler
 from Modules import ModulesHandler
 from OptionsParser import OptionsParser
 from ReportGenerator import ReportGenerator
@@ -420,19 +421,10 @@ class Commands(API):
         Create new module with a given name
         Args:
             module_name: (string) Name of the new module
+            module_options: (array) Module options
         """
         if not module_name.lower().endswith('.py'):
             module_name = module_name + '.py'
-
-        dotdotslash_payloads = ['../', '..\\', '..\\/']
-        while True:
-            replace_occured = False
-            for payload in dotdotslash_payloads:
-                if payload in module_name:
-                    module_name = module_name.replace(payload, '')
-                    replace_occured = True
-            if not replace_occured:
-                break
 
         if os.path.isfile('./exploits/'+ module_name):
             # if that name is already taken - abort, in order to not to replace the existing module
@@ -440,14 +432,16 @@ class Commands(API):
             return
 
         print('{} {}'.format(module_name, module_options))
-
+        cmh = CreateModuleHandler()
         try:
-            with open('./exploits/'+ module_name, 'w') as create_f, open('./templates/clean.py', 'r') as read_f:
-                create_f.write(read_f.read())
-            self.send_info(client, 'Module created')
-            self.available_modules = self.get_all_modules_paths()
+            if cmh.create_module(module_name, module_options):
+                self.send_info(client, 'Module created')
+                self.available_modules = self.get_all_modules_paths()
+            else:
+                self.send_error(client, 'Failed to create new module')
         except Exception as ex:
-            self.send_error(client, 'Failed to create new module\r\n{}'.format(ex))
+            print(ex)
+            self.send_error(client, 'Failed to create new module')
 
     def make_error(self, error_msg):
         return dict(error=True, message=error_msg)
