@@ -455,6 +455,8 @@ var modal_create_module_dialog_template = function() {/*
                   <create-module-options :show_button="data.show" :option_name="data.name" :option_value="data.value" :option_desc="data.desc" :id="data.id"/>
                 </template>
               </table>
+              <h4>Module features:</h4>
+              <create-module-features/>
             </div>
           </div>
           <!--Footer-->
@@ -615,8 +617,122 @@ Vue.component('re-modal-create-module', {
   }
 })
 
+var create_module_features = function() {/*
+  <table style="width: 100%; border: 1px solid black;">
+    <tr>
+      <th>Target</th>
+      <th>Exploit type</th>
+      <th>Features</th>
+    </tr>
+    <tr>
+      <td>
+        <select v-model="target.selected">
+          <option v-for="opt in target.options" :value="opt.value">
+            {{ opt.text }}
+          </option>
+        </select>
+      </td>
+      <td>
+        <select v-model="exploitType.selected">
+          <option v-for="opt in exploitType.options" :value="opt.value">
+            {{ opt.text }}
+          </option>
+        </select>
+      </td>
+      <td>
+        <table style="width: 100%;">
+          <module-feature v-for="f in features" :name="f.name" :checked="f.checked"/>
+        </table>
+      </td>
+    </tr>
+  </table>
+*/}.toString().slice(14, -3)
 
-var modal_dialog_template = function(){/*
+Vue.component('create-module-features', {
+  template: create_module_features,
+  data: function() {
+    return {
+      target: {
+        selected: 'web',
+        options: [
+          {text: 'Web', value: 'web'},
+          {text: 'Local', value: 'local'}
+        ]
+      },
+      exploitType: {
+        selected: 'sqli',
+        options: [
+          {text: 'SQL Injection', value: 'sqli'},
+          {text: 'Time-based Blind SQL Injection', value: 'bsqli'}
+        ]
+      },
+      features: [
+        {id: 1, name: 'Create method', checked: false},
+        {id: 2, name: 'Import lib', checked: false},
+        {id: 3, name: 'Make url', checked: false}
+      ]
+    }
+  },
+  created: function() {
+    //this.applyPredefined([2,3]);
+  },
+  watch: {
+    'target.selected': function(val) {
+      switch (val) {
+        case 'web':
+          this.applyPredefined([1,3], true)
+          break
+        case 'local':
+          this.applyPredefined([2], true)
+        default:
+          return
+      }
+    }
+  },
+  methods: {
+    applyPredefined: function(features_id, value) {
+      for (var i = 0; i < features_id.length; i++) {
+        var index = this.features.findIndex(function(elem, index, arr) {
+          return elem.id == features_id[i]
+        })
+        if (index != -1) {
+          this.features[index].checked = value
+        }
+      }
+    },
+    uncheckAll: function() {
+      for (var i = 0; i < this.features.length; i++) {
+        this.features[i].checked = false
+      }
+    }
+  }
+})
+
+var module_feature = function() {/*
+  <tr>
+    <td>
+      <input type="checkbox" v-model="checked">{{ name }}</input>
+    </td>
+  </tr>
+*/}.toString().slice(14, -3)
+
+Vue.component('module-feature', {
+  template: module_feature,
+  props: {
+    name: {
+      default: 'Feature'
+    },
+    checked: {
+      default: false
+    }
+  },
+  data: function() {
+    
+  }
+})
+
+
+var modal_dialog_template = function() {/*
   <div v-show="show" :transition="transition">
     <div class="modal" @click.self="clickMask">
       <div class="modal-dialog" :class="modalClass" v-el:dialog>
