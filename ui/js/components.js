@@ -663,13 +663,27 @@ Vue.component('create-module-features', {
         selected: 'sqli',
         options: [
           {text: 'SQL Injection', value: 'sqli'},
-          {text: 'Time-based Blind SQL Injection', value: 'bsqli'}
+          {text: 'Error-based SQL Injection', value: 'esqli'},
+          {text: 'Blind SQL Injection', value: 'bsqli'},
+          {text: 'Directory Traversal', value: 'dirtrav'},
+          {text: 'Buffer Overflow', value: 'bof'},
+          {text: 'Command Injection', value: 'comminj'},
+          {text: 'XML Injection', value: 'xmlinj'},
+          {text: 'File Upload', value: 'fileu'},
+          {text: 'File Download', value: 'filed'},
+          {text: 'Info Disclosure', value: 'infodisc'}
         ]
       },
       features: [
-        {id: 1, name: 'Create method', checked: false},
-        {id: 2, name: 'Import lib', checked: false},
-        {id: 3, name: 'Make url', checked: false}
+        {id: 1, name: 'Handle cookies', checked: false},
+        {id: 2, name: 'Add proxy', checked: false},
+        {id: 3, name: 'Support SSL', checked: false},
+        {id: 4, name: 'Create login method', checked: false},
+        {id: 5, name: 'Spoof user-agent', checked: false},
+        {id: 6, name: 'Load DirTrav payloads', checked: false},
+        {id: 7, name: 'Add buffer overflow pattern generation', checked:false},
+        {id: 8, name: 'Generate shellcode', checked: false},
+        {id: 9, name: 'Generate report', checked: false}
       ]
     }
   },
@@ -680,17 +694,24 @@ Vue.component('create-module-features', {
     'target.selected': function(val) {
       switch (val) {
         case 'web':
-          this.applyPredefined([1,3], true)
+          this.applyPredefined([1,3])
           break
         case 'local':
-          this.applyPredefined([2], true)
+          this.applyPredefined([2])
+          break
+        default:
+          return
+      }
+    },
+    'exploitType.selected': function(val) {
+      switch (val) {
         default:
           return
       }
     }
   },
   methods: {
-    applyPredefined: function(features_id, value) {
+    applyPredefined: function(features_id, value=true) {
       for (var i = 0; i < features_id.length; i++) {
         var index = this.features.findIndex(function(elem, index, arr) {
           return elem.id == features_id[i]
