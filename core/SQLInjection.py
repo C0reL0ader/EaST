@@ -110,7 +110,7 @@ class BooleanBasedBlind(BlindInjectionBase):
     Boolean-based Blind SQL Injection Class
 
     Usage:
-        1) Create an injection template. Use tags {CHARCODE} for letter and {POSITION} for it's position
+        1) Create an injection template. Use tags: {CHARCODE} for letter and {POSITION} for it's position
             sqli = 'test\' or substring(database(),1,1)=\'a\'#'
         2) Create urllib2.Request object and put {INJECTION} tag to the point of injection
             url = 'http://example.com/?param1={INJECTION}' # if the injection is in the URL
