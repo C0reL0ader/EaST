@@ -30,7 +30,7 @@ Tests for Windows and Linux. Should function everywhere where Python is installe
     python start.py [-p PORT] [--all-interfaces]
 
 ## 4. Additional resources
-* Exploits and Security Tools Framework [website](http://eastfw.com/).
-* [EaST Exploits DB](http://eastexploits.com/)
+* Exploits and Security Tools Framework [website](http://eastfw.net/).
+* [EaST Exploits DB](http://eastfw.net/)
 * [EaST exploits developer guide](https://github.com/C0reL0ader/EaST/wiki)
 * [Twitter](https://twitter.com/EAST_framework)
